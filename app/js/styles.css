@@ -1,0 +1,39 @@
+/* The NekoUI page shell handles colors, spacing, fonts. Anything here is
+   scoped to surfaces NekoUI doesn't own — primarily the React Flow canvas. */
+
+.mwflow-app-root {
+  --mwflow-canvas-bg: #f6f8fb;
+  --mwflow-canvas-dot: #d8dee9;
+}
+
+.react-flow__node.mwflow-node {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.react-flow__edge-path {
+  stroke-width: 2px;
+  stroke: #c7cdd9;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--neko-blue, hsl(217 80% 42%));
+}
+
+.react-flow__handle {
+  width: 10px;
+  height: 10px;
+  background: white;
+  border: 2px solid #c7cdd9;
+}
+
+.react-flow__handle.react-flow__handle-connecting {
+  background: var(--neko-blue, hsl(217 80% 42%));
+  border-color: var(--neko-blue, hsl(217 80% 42%));
+}
+
+/* Canvas text uses the WordPress admin system font stack (no remote webfont). */
+.mwflow-node, .mwflow-palette-item {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}

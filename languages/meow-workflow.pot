@@ -1,0 +1,1666 @@
+# Copyright (C) 2026 Jordy Meow
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Meow Workflow (Pro) 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/meow-workflow\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-06-18T06:38:16+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: meow-workflow\n"
+
+#. Plugin Name of the plugin
+#: meow-workflow-pro.php
+msgid "Meow Workflow (Pro)"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: meow-workflow-pro.php
+msgid "https://wordpress.org/plugins/meow-workflow/"
+msgstr ""
+
+#. Description of the plugin
+#: meow-workflow-pro.php
+msgid "Visual workflow automation for WordPress. Connects AI Engine, SEO Engine, Code Engine, Social Engine and more into flows you draw on a canvas."
+msgstr ""
+
+#. Author of the plugin
+#: meow-workflow-pro.php
+msgid "Jordy Meow"
+msgstr ""
+
+#. Author URI of the plugin
+#: meow-workflow-pro.php
+msgid "https://jordymeow.com"
+msgstr ""
+
+#: classes/admin.php:20
+msgid "Meow Workflow"
+msgstr ""
+
+#: classes/admin.php:21
+msgid "Workflows"
+msgstr ""
+
+#: classes/ai-authoring.php:73
+msgid "AI authoring needs the AI Engine plugin. Install or activate AI Engine first."
+msgstr ""
+
+#: classes/ai-authoring.php:80
+msgid "Tell me what you want — a sentence or two is enough."
+msgstr ""
+
+#: classes/ai-authoring.php:157
+#: classes/ai-authoring.php:170
+#: classes/ai-authoring.php:229
+#: classes/rest.php:399
+#: classes/rest.php:495
+msgid "Untitled workflow"
+msgstr ""
+
+#: classes/ai-authoring.php:175
+msgid "No flow to explain."
+msgstr ""
+
+#: classes/ai-authoring.php:186
+msgid "No flow to extend."
+msgstr ""
+
+#: classes/ai-authoring.php:207
+msgid "No flow to fix."
+msgstr ""
+
+#: classes/ai-authoring.php:418
+#: classes/ai-authoring.php:447
+msgid "AI Engine is not active."
+msgstr ""
+
+#: classes/ai-authoring.php:436
+msgid "The AI didn't return a workflow we could read. Try rewording your request — be specific about the trigger and the actions."
+msgstr ""
+
+#: classes/ai-authoring.php:469
+msgid "AI Engine didn't respond. Check your AI Engine configuration and try again."
+msgstr ""
+
+#: classes/ai-authoring.php:474
+#, php-format
+msgid "%s — check AI Engine → Limits, or try a different environment."
+msgstr ""
+
+#: classes/ai-authoring.php:480
+#, php-format
+msgid "%s — verify the API key for the active AI Engine environment."
+msgstr ""
+
+#: classes/ai-authoring.php:485
+msgid "The AI took too long to respond. Try again, or simplify your prompt."
+msgstr ""
+
+#: classes/ai-authoring.php:759
+msgid "The AI tried to use a step that isn't installed. Try being more specific — for example, mention 'AI Engine', 'WordPress post', or 'send email' — so the AI picks from the steps you actually have."
+msgstr ""
+
+#: classes/ai-authoring.php:762
+msgid "The AI didn't fill in everything a step needs (like the email address, the prompt, or the URL). Try describing those details in your request."
+msgstr ""
+
+#: classes/ai-authoring.php:765
+msgid "The AI couldn't figure out when this workflow should fire. Try starting your sentence with 'When…' or 'Every…'."
+msgstr ""
+
+#: classes/ai-authoring.php:767
+msgid "The AI's plan didn't quite line up with the available steps. Try rewording your request, or describe the trigger and each action separately."
+msgstr ""
+
+#: classes/core.php:230
+msgid "Untitled flow"
+msgstr ""
+
+#: classes/integrations/ai-engine.php:30
+#: classes/integrations/ai-engine.php:85
+msgid "Model"
+msgstr ""
+
+#: classes/integrations/ai-engine.php:31
+msgid "Leave blank to use the AI Engine default model."
+msgstr ""
+
+#: classes/integrations/ai-engine.php:35
+msgid "Environment"
+msgstr ""
+
+#: classes/integrations/ai-engine.php:36
+msgid "Pick an AI Engine environment (its API keys/settings). Leave blank for the default."
+msgstr ""
+
+#: classes/integrations/ai-engine.php:40
+msgid "Temperature"
+msgstr ""
+
+#: classes/integrations/ai-engine.php:47
+msgid "AI Engine"
+msgstr ""
+
+#: classes/integrations/ai-engine.php:48
+msgid "Text, image, vision and JSON generation via AI Engine."
+msgstr ""
+
+#: classes/integrations/ai-engine.php:55
+msgid "Text completion"
+msgstr ""
+
+#: classes/integrations/ai-engine.php:56
+msgid "Generate text from a prompt. Uses AI Engine defaults unless you override them in Advanced."
+msgstr ""
+
+#: classes/integrations/ai-engine.php:59
+#: classes/integrations/ai-engine.php:73
+#: classes/integrations/ai-engine.php:84
+#: classes/integrations/ai-engine.php:100
+#: classes/integrations/ai-engine.php:112
+msgid "Prompt"
+msgstr ""
+
+#: classes/integrations/ai-engine.php:64
+#: classes/integrations/ai-engine.php:75
+#: classes/integrations/social-engine.php:32
+msgid "Text"
+msgstr ""
+
+#: classes/integrations/ai-engine.php:69
+msgid "Fast text completion"
+msgstr ""
+
+#: classes/integrations/ai-engine.php:70
+msgid "Generate text using the \"fast\" model configured in AI Engine."
+msgstr ""
+
+#: classes/integrations/ai-engine.php:80
+msgid "Image generation"
+msgstr ""
+
+#: classes/integrations/ai-engine.php:81
+msgid "Generate an image from a prompt."
+msgstr ""
+
+#: classes/integrations/ai-engine.php:86
+msgid "Defaults to your AI Engine image model."
+msgstr ""
+
+#: classes/integrations/ai-engine.php:91
+msgid "Image markdown / URL"
+msgstr ""
+
+#: classes/integrations/ai-engine.php:96
+msgid "Vision (describe an image)"
+msgstr ""
+
+#: classes/integrations/ai-engine.php:97
+msgid "Ask the AI a question about an image URL."
+msgstr ""
+
+#: classes/integrations/ai-engine.php:101
+msgid "Image URL"
+msgstr ""
+
+#: classes/integrations/ai-engine.php:103
+msgid "Answer"
+msgstr ""
+
+#: classes/integrations/ai-engine.php:108
+msgid "JSON output"
+msgstr ""
+
+#: classes/integrations/ai-engine.php:109
+msgid "Get a structured JSON answer from the AI."
+msgstr ""
+
+#: classes/integrations/ai-engine.php:114
+msgid "JSON"
+msgstr ""
+
+#: classes/integrations/code-engine.php:25
+msgid "Code Engine"
+msgstr ""
+
+#: classes/integrations/code-engine.php:26
+msgid "Your own functions, as workflow steps."
+msgstr ""
+
+#: classes/integrations/code-engine.php:33
+msgid "Execute snippet (by ID)"
+msgstr ""
+
+#: classes/integrations/code-engine.php:34
+msgid "Run a Code Engine snippet by its ID and capture what it returns."
+msgstr ""
+
+#: classes/integrations/code-engine.php:37
+#: classes/integrations/code-engine.php:49
+#: classes/integrations/code-engine.php:63
+msgid "Snippet"
+msgstr ""
+
+#: classes/integrations/code-engine.php:37
+#: classes/integrations/code-engine.php:49
+msgid "— Pick a snippet —"
+msgstr ""
+
+#: classes/integrations/code-engine.php:37
+msgid "The Code Engine snippet to run."
+msgstr ""
+
+#: classes/integrations/code-engine.php:38
+#: classes/integrations/code-engine.php:50
+msgid "Arguments (optional)"
+msgstr ""
+
+#: classes/integrations/code-engine.php:38
+#: classes/integrations/code-engine.php:50
+msgid "A JSON object of arguments passed to the snippet. Leave empty if it takes none."
+msgstr ""
+
+#: classes/integrations/code-engine.php:40
+#: classes/integrations/code-engine.php:52
+msgid "Snippet return value"
+msgstr ""
+
+#: classes/integrations/code-engine.php:45
+msgid "Execute snippet (by name)"
+msgstr ""
+
+#: classes/integrations/code-engine.php:46
+msgid "Run a Code Engine snippet by its name and capture what it returns."
+msgstr ""
+
+#: classes/integrations/code-engine.php:49
+msgid "The Code Engine function snippet to run."
+msgstr ""
+
+#: classes/integrations/code-engine.php:57
+msgid "Get snippet metadata"
+msgstr ""
+
+#: classes/integrations/code-engine.php:58
+msgid "Look up a snippet's details (name, description, status) by its ID."
+msgstr ""
+
+#: classes/integrations/code-engine.php:61
+msgid "Snippet ID"
+msgstr ""
+
+#: classes/integrations/code-engine.php:61
+msgid "Find it in Code Engine → Snippets."
+msgstr ""
+
+#: classes/integrations/code-engine.php:110
+#, php-format
+msgid "Runs your %s function from Code Engine."
+msgstr ""
+
+#: classes/integrations/code-engine.php:113
+msgid "Result"
+msgstr ""
+
+#: classes/integrations/core.php:24
+msgid "Core"
+msgstr ""
+
+#: classes/integrations/core.php:25
+msgid "Triggers and universal logic nodes built into Meow Workflow."
+msgstr ""
+
+#: classes/integrations/core.php:31
+msgid "Manual / Test once"
+msgstr ""
+
+#: classes/integrations/core.php:33
+#: classes/integrations/core.php:39
+msgid "Fired at"
+msgstr ""
+
+#: classes/integrations/core.php:37
+msgid "On a schedule"
+msgstr ""
+
+#: classes/integrations/core.php:43
+msgid "Webhook (HTTP)"
+msgstr ""
+
+#: classes/integrations/core.php:45
+msgid "Request body"
+msgstr ""
+
+#: classes/integrations/core.php:49
+msgid "WordPress hook"
+msgstr ""
+
+#: classes/integrations/core.php:52
+msgid "First arg"
+msgstr ""
+
+#: classes/integrations/core.php:53
+msgid "Second arg"
+msgstr ""
+
+#: classes/integrations/core.php:58
+msgid "New RSS item"
+msgstr ""
+
+#: classes/integrations/core.php:61
+msgid "Item title"
+msgstr ""
+
+#: classes/integrations/core.php:62
+msgid "Item URL"
+msgstr ""
+
+#: classes/integrations/core.php:63
+msgid "Item content (plain text)"
+msgstr ""
+
+#: classes/integrations/core.php:64
+msgid "Published date"
+msgstr ""
+
+#: classes/integrations/core.php:65
+msgid "Author"
+msgstr ""
+
+#: classes/integrations/core.php:72
+msgid "Condition"
+msgstr ""
+
+#: classes/integrations/core.php:73
+msgid "Branch the workflow based on simple conditions. The \"true\" branch runs when the conditions match; the \"false\" branch runs otherwise."
+msgstr ""
+
+#: classes/integrations/core.php:76
+msgid "Match"
+msgstr ""
+
+#: classes/integrations/core.php:79
+msgid "All conditions must match (AND)"
+msgstr ""
+
+#: classes/integrations/core.php:80
+msgid "Any condition can match (OR)"
+msgstr ""
+
+#: classes/integrations/core.php:84
+msgid "Conditions"
+msgstr ""
+
+#: classes/integrations/core.php:86
+msgid "Use the left side to pick the data to check, e.g. {{ trigger.value }} or {{ get_post1.title }}."
+msgstr ""
+
+#: classes/integrations/core.php:90
+#: classes/integrations/core.php:110
+msgid "Matched branch"
+msgstr ""
+
+#: classes/integrations/core.php:96
+msgid "Branch by value"
+msgstr ""
+
+#: classes/integrations/core.php:97
+msgid "Sends the workflow down a path matching the value below. Each outgoing arrow can be labelled — e.g. publish, draft, trash."
+msgstr ""
+
+#: classes/integrations/core.php:100
+msgid "Value to match"
+msgstr ""
+
+#: classes/integrations/core.php:103
+msgid "The value to route on. Reference earlier data with {{ ... }}, e.g. {{ trigger.status }}."
+msgstr ""
+
+#: classes/integrations/core.php:105
+msgid "Branches"
+msgstr ""
+
+#: classes/integrations/core.php:106
+msgid "One row per path: a short name (shown on the step) and the value that picks it. Matching is case-insensitive. Each branch becomes its own connector at the bottom of the step."
+msgstr ""
+
+#: classes/integrations/core.php:116
+msgid "For Each"
+msgstr ""
+
+#: classes/integrations/core.php:117
+msgid "Runs the steps after it once for every item in a list — e.g. each post from Get Recent Posts. Wire the DONE connector to what should happen after the last item."
+msgstr ""
+
+#: classes/integrations/core.php:120
+msgid "Items"
+msgstr ""
+
+#: classes/integrations/core.php:123
+msgid "A list from an earlier step. Inside the loop, reference the current entry by this step's id, e.g. {{ foreach1.item.title }}."
+msgstr ""
+
+#: classes/integrations/core.php:125
+msgid "Max items"
+msgstr ""
+
+#: classes/integrations/core.php:127
+msgid "Safety cap — extra items are skipped."
+msgstr ""
+
+#: classes/integrations/core.php:131
+msgid "Current item"
+msgstr ""
+
+#: classes/integrations/core.php:132
+msgid "Index (starts at 0)"
+msgstr ""
+
+#: classes/integrations/core.php:133
+msgid "Total items"
+msgstr ""
+
+#: classes/integrations/core.php:139
+msgid "Random"
+msgstr ""
+
+#: classes/integrations/core.php:140
+msgid "Generates a random value — one item picked from a list, or a number in a range. Pair with Branch By Value or Condition to make a flow act differently each run."
+msgstr ""
+
+#: classes/integrations/core.php:143
+msgid "Choices"
+msgstr ""
+
+#: classes/integrations/core.php:145
+msgid "Optional. Comma-separated list — one item is picked at random. Leave empty to get a number between Min and Max instead."
+msgstr ""
+
+#: classes/integrations/core.php:147
+msgid "Min"
+msgstr ""
+
+#: classes/integrations/core.php:148
+msgid "Max"
+msgstr ""
+
+#: classes/integrations/core.php:151
+msgid "Random value"
+msgstr ""
+
+#: classes/integrations/core.php:157
+msgid "Delay"
+msgstr ""
+
+#: classes/integrations/core.php:158
+msgid "Pauses execution for N seconds (capped at 30s in the sync runner)."
+msgstr ""
+
+#: classes/integrations/core.php:161
+msgid "Seconds"
+msgstr ""
+
+#: classes/integrations/core.php:163
+msgid "Waited"
+msgstr ""
+
+#: classes/integrations/core.php:168
+msgid "Save a value"
+msgstr ""
+
+#: classes/integrations/core.php:169
+msgid "Saves a value so later steps can reference it by this step's id, e.g. {{ set_var1.value }} (the id is shown on the step)."
+msgstr ""
+
+#: classes/integrations/core.php:172
+#: classes/integrations/core.php:178
+#: classes/integrations/wordpress.php:293
+msgid "Value"
+msgstr ""
+
+#: classes/integrations/core.php:175
+msgid "Type a fixed value, or reference earlier data with {{ ... }}."
+msgstr ""
+
+#: classes/integrations/core.php:183
+msgid "Send email"
+msgstr ""
+
+#: classes/integrations/core.php:184
+msgid "Send a plain-text email via wp_mail."
+msgstr ""
+
+#: classes/integrations/core.php:187
+msgid "To"
+msgstr ""
+
+#: classes/integrations/core.php:190
+msgid "{{ admin_email }} sends to the site admin — or type any address."
+msgstr ""
+
+#: classes/integrations/core.php:192
+msgid "Subject"
+msgstr ""
+
+#: classes/integrations/core.php:194
+msgid "Workflow alert"
+msgstr ""
+
+#: classes/integrations/core.php:196
+#: classes/integrations/core.php:215
+msgid "Body"
+msgstr ""
+
+#: classes/integrations/core.php:198
+msgid ""
+"Hi,\n"
+"\n"
+"Your workflow just ran.\n"
+""
+msgstr ""
+
+#: classes/integrations/core.php:201
+msgid "Email sent"
+msgstr ""
+
+#: classes/integrations/core.php:206
+msgid "HTTP request"
+msgstr ""
+
+#: classes/integrations/core.php:207
+msgid "Call an external URL (e.g. another app's API) and capture the response status and body."
+msgstr ""
+
+#: classes/integrations/core.php:210
+#: classes/integrations/wordpress.php:244
+msgid "URL"
+msgstr ""
+
+#: classes/integrations/core.php:211
+msgid "Method"
+msgstr ""
+
+#: classes/integrations/core.php:217
+msgid "Sent as the request body for POST/PUT/PATCH. Usually JSON."
+msgstr ""
+
+#: classes/integrations/core.php:219
+msgid "Headers (optional)"
+msgstr ""
+
+#: classes/integrations/core.php:221
+msgid "Optional request headers as a JSON object."
+msgstr ""
+
+#: classes/integrations/core.php:225
+msgid "Status code"
+msgstr ""
+
+#: classes/integrations/core.php:226
+msgid "Response body"
+msgstr ""
+
+#: classes/integrations/core.php:227
+msgid "Response JSON"
+msgstr ""
+
+#: classes/integrations/core.php:233
+msgid "Log message"
+msgstr ""
+
+#: classes/integrations/core.php:234
+msgid "Writes a line to the diagnostics log (Settings → For developers)."
+msgstr ""
+
+#: classes/integrations/core.php:237
+msgid "Message"
+msgstr ""
+
+#: classes/integrations/core.php:238
+msgid "Level"
+msgstr ""
+
+#: classes/integrations/core.php:243
+msgid "Logged"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:20
+msgid "SEO Engine"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:21
+msgid "Scoring, titles, descriptions and insights via SEO Engine."
+msgstr ""
+
+#: classes/integrations/seo-engine.php:28
+msgid "Run SEO scan"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:29
+msgid "Run an SEO analysis on a post and return the full result for later steps."
+msgstr ""
+
+#: classes/integrations/seo-engine.php:32
+#: classes/integrations/seo-engine.php:43
+#: classes/integrations/seo-engine.php:54
+#: classes/integrations/seo-engine.php:66
+#: classes/integrations/seo-engine.php:78
+#: classes/integrations/wordpress.php:29
+#: classes/integrations/wordpress.php:39
+#: classes/integrations/wordpress.php:49
+#: classes/integrations/wordpress.php:90
+#: classes/integrations/wordpress.php:154
+#: classes/integrations/wordpress.php:169
+#: classes/integrations/wordpress.php:201
+#: classes/integrations/wordpress.php:270
+#: classes/integrations/wordpress.php:291
+#: classes/integrations/wordpress.php:304
+#: classes/integrations/wordpress.php:324
+msgid "Post ID"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:34
+msgid "Scan result"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:39
+msgid "Get SEO score"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:40
+msgid "Get a post's SEO score (0–100). Pair with Condition to act only on low-scoring posts."
+msgstr ""
+
+#: classes/integrations/seo-engine.php:45
+msgid "Score"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:50
+msgid "Set SEO title"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:51
+msgid "Set the SEO title (meta title) shown in search results for a post."
+msgstr ""
+
+#: classes/integrations/seo-engine.php:55
+#: classes/integrations/wordpress.php:94
+#: classes/integrations/wordpress.php:115
+#: classes/integrations/wordpress.php:129
+#: classes/integrations/wordpress.php:155
+msgid "Title"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:57
+#: classes/integrations/seo-engine.php:69
+#: classes/integrations/wordpress.php:223
+#: classes/integrations/wordpress.php:282
+#: classes/integrations/wordpress.php:295
+#: classes/integrations/wordpress.php:315
+#: classes/integrations/wordpress.php:327
+msgid "Updated"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:62
+msgid "Set SEO description"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:63
+msgid "Set the SEO description (meta description) shown under the title in search results."
+msgstr ""
+
+#: classes/integrations/seo-engine.php:67
+msgid "Description"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:74
+msgid "Get SEO insights"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:75
+msgid "Get SEO Engine's detailed insights and suggestions for a post."
+msgstr ""
+
+#: classes/integrations/seo-engine.php:80
+msgid "Insights"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:85
+msgid "Get site-wide SEO summary"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:86
+msgid "Site-level SEO snapshot: scored-posts breakdown, monthly visitors, top posts. Useful for a daily/weekly email digest."
+msgstr ""
+
+#: classes/integrations/seo-engine.php:90
+msgid "Posts with good SEO"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:91
+msgid "Posts with fair SEO"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:92
+msgid "Posts with poor SEO"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:93
+msgid "Monthly visitors"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:94
+msgid "Monthly pageviews"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:95
+msgid "Top posts (monthly)"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:96
+msgid "One-line summary"
+msgstr ""
+
+#: classes/integrations/seo-engine.php:186
+#, php-format
+msgid "SEO health — %1$d good, %2$d fair, %3$d poor. Monthly visitors: %4$d. Pageviews: %5$d."
+msgstr ""
+
+#: classes/integrations/social-engine.php:20
+msgid "Social Engine"
+msgstr ""
+
+#: classes/integrations/social-engine.php:21
+msgid "Publish or draft social-media posts via Social Engine."
+msgstr ""
+
+#: classes/integrations/social-engine.php:28
+msgid "Create social post"
+msgstr ""
+
+#: classes/integrations/social-engine.php:29
+msgid "Draft or publish a post to a connected social account via Social Engine."
+msgstr ""
+
+#: classes/integrations/social-engine.php:33
+msgid "Attachment ID(s)"
+msgstr ""
+
+#: classes/integrations/social-engine.php:34
+msgid "Optional. A single media ID or a comma-separated list of attachment IDs."
+msgstr ""
+
+#: classes/integrations/social-engine.php:36
+msgid "Publish immediately"
+msgstr ""
+
+#: classes/integrations/social-engine.php:38
+msgid "Off saves it as a draft in Social Engine; on posts it right away."
+msgstr ""
+
+#: classes/integrations/social-engine.php:40
+msgid "Account name (optional)"
+msgstr ""
+
+#: classes/integrations/social-engine.php:41
+msgid "e.g. My Twitter"
+msgstr ""
+
+#: classes/integrations/social-engine.php:42
+msgid "Match by the account name shown in Social Engine. Leave empty to use the default account."
+msgstr ""
+
+#: classes/integrations/social-engine.php:45
+msgid "Social post ID"
+msgstr ""
+
+#: classes/integrations/social-engine.php:50
+msgid "List accounts"
+msgstr ""
+
+#: classes/integrations/social-engine.php:51
+msgid "List the social accounts connected in Social Engine."
+msgstr ""
+
+#: classes/integrations/social-engine.php:54
+msgid "Service type filter (optional)"
+msgstr ""
+
+#: classes/integrations/social-engine.php:55
+msgid "e.g. twitter"
+msgstr ""
+
+#: classes/integrations/social-engine.php:56
+msgid "Optional. Filter by network, e.g. twitter, facebook, linkedin. Leave empty for all."
+msgstr ""
+
+#: classes/integrations/social-engine.php:59
+msgid "Accounts"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:21
+#: classes/templates.php:201
+#: classes/templates.php:232
+msgid "WooCommerce"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:22
+msgid "Orders and shop events."
+msgstr ""
+
+#: classes/integrations/woocommerce.php:28
+#: classes/templates.php:208
+msgid "When a new order comes in"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:32
+#: classes/integrations/woocommerce.php:42
+#: classes/integrations/woocommerce.php:52
+#: classes/integrations/woocommerce.php:66
+#: classes/integrations/woocommerce.php:87
+msgid "Order ID"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:38
+#: classes/templates.php:239
+msgid "When an order is completed"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:48
+msgid "When an order changes status"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:53
+msgid "Old status"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:54
+#: classes/integrations/wordpress.php:213
+#: classes/integrations/wordpress.php:271
+msgid "New status"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:62
+msgid "Get order"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:63
+msgid "Load an order — total, status, customer, and a ready-to-paste summary of its items."
+msgstr ""
+
+#: classes/integrations/woocommerce.php:69
+#: classes/integrations/wordpress.php:93
+#: classes/integrations/wordpress.php:114
+#: classes/integrations/wordpress.php:181
+#: classes/integrations/wordpress.php:197
+msgid "ID"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:70
+#: classes/integrations/wordpress.php:131
+#: classes/integrations/wordpress.php:158
+#: classes/integrations/wordpress.php:202
+msgid "Status"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:71
+msgid "Total"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:72
+msgid "Currency"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:73
+msgid "Customer name"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:74
+msgid "Customer email"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:75
+msgid "Number of items"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:76
+msgid "Items (bulleted list)"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:77
+msgid "Payment method"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:83
+msgid "Add order note"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:84
+msgid "Add a note to an order — private by default, or visible to the customer."
+msgstr ""
+
+#: classes/integrations/woocommerce.php:88
+msgid "Note"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:89
+msgid "Visible to the customer"
+msgstr ""
+
+#: classes/integrations/woocommerce.php:91
+msgid "Note ID"
+msgstr ""
+
+#: classes/integrations/wordpress.php:18
+msgid "WordPress"
+msgstr ""
+
+#: classes/integrations/wordpress.php:19
+msgid "Posts, users, media, options."
+msgstr ""
+
+#: classes/integrations/wordpress.php:25
+#: classes/templates.php:61
+#: classes/templates.php:344
+msgid "When a post is published"
+msgstr ""
+
+#: classes/integrations/wordpress.php:35
+msgid "When a post is updated"
+msgstr ""
+
+#: classes/integrations/wordpress.php:45
+msgid "When a post is trashed"
+msgstr ""
+
+#: classes/integrations/wordpress.php:55
+#: classes/templates.php:447
+msgid "When a user registers"
+msgstr ""
+
+#: classes/integrations/wordpress.php:58
+#: classes/integrations/wordpress.php:178
+msgid "User ID"
+msgstr ""
+
+#: classes/integrations/wordpress.php:64
+#: classes/templates.php:124
+#: classes/templates.php:398
+msgid "When a comment is posted"
+msgstr ""
+
+#: classes/integrations/wordpress.php:68
+#: classes/integrations/wordpress.php:78
+#: classes/integrations/wordpress.php:194
+#: classes/integrations/wordpress.php:212
+msgid "Comment ID"
+msgstr ""
+
+#: classes/integrations/wordpress.php:74
+msgid "When a comment is approved"
+msgstr ""
+
+#: classes/integrations/wordpress.php:86
+msgid "Get post"
+msgstr ""
+
+#: classes/integrations/wordpress.php:87
+msgid "Load a post by its ID so later steps can use its title, content, author and more."
+msgstr ""
+
+#: classes/integrations/wordpress.php:95
+#: classes/integrations/wordpress.php:116
+#: classes/integrations/wordpress.php:130
+#: classes/integrations/wordpress.php:156
+msgid "Content"
+msgstr ""
+
+#: classes/integrations/wordpress.php:96
+#: classes/integrations/wordpress.php:157
+msgid "Excerpt"
+msgstr ""
+
+#: classes/integrations/wordpress.php:97
+#: classes/integrations/wordpress.php:117
+msgid "Permalink"
+msgstr ""
+
+#: classes/integrations/wordpress.php:98
+msgid "Author ID"
+msgstr ""
+
+#: classes/integrations/wordpress.php:99
+#: classes/integrations/wordpress.php:118
+msgid "Featured image ID"
+msgstr ""
+
+#: classes/integrations/wordpress.php:100
+#: classes/integrations/wordpress.php:119
+msgid "Featured image URL"
+msgstr ""
+
+#: classes/integrations/wordpress.php:106
+msgid "Get random post"
+msgstr ""
+
+#: classes/integrations/wordpress.php:107
+msgid "Pick one random published post — great for \"post of the day\" or social-sharing flows."
+msgstr ""
+
+#: classes/integrations/wordpress.php:110
+#: classes/integrations/wordpress.php:140
+#: classes/integrations/wordpress.php:253
+msgid "Post type"
+msgstr ""
+
+#: classes/integrations/wordpress.php:110
+#: classes/integrations/wordpress.php:140
+msgid "The post type slug, e.g. post, page, or product."
+msgstr ""
+
+#: classes/integrations/wordpress.php:111
+msgid "Only posts with a featured image"
+msgstr ""
+
+#: classes/integrations/wordpress.php:125
+msgid "Create post"
+msgstr ""
+
+#: classes/integrations/wordpress.php:126
+msgid "Create a new post or page. Starts as a draft by default so nothing goes live by accident."
+msgstr ""
+
+#: classes/integrations/wordpress.php:133
+#: classes/integrations/wordpress.php:163
+msgid "Draft"
+msgstr ""
+
+#: classes/integrations/wordpress.php:134
+#: classes/integrations/wordpress.php:162
+#: classes/integrations/wordpress.php:274
+msgid "Published"
+msgstr ""
+
+#: classes/integrations/wordpress.php:135
+#: classes/integrations/wordpress.php:164
+#: classes/integrations/wordpress.php:276
+msgid "Pending review"
+msgstr ""
+
+#: classes/integrations/wordpress.php:136
+#: classes/integrations/wordpress.php:165
+#: classes/integrations/wordpress.php:277
+msgid "Private"
+msgstr ""
+
+#: classes/integrations/wordpress.php:143
+msgid "New post ID"
+msgstr ""
+
+#: classes/integrations/wordpress.php:144
+msgid "Edit URL"
+msgstr ""
+
+#: classes/integrations/wordpress.php:150
+msgid "Update post"
+msgstr ""
+
+#: classes/integrations/wordpress.php:151
+msgid "Change fields on an existing post. Leave a field empty to keep its current value."
+msgstr ""
+
+#: classes/integrations/wordpress.php:155
+msgid "Leave empty to keep the current title."
+msgstr ""
+
+#: classes/integrations/wordpress.php:156
+msgid "Leave empty to keep the current content."
+msgstr ""
+
+#: classes/integrations/wordpress.php:157
+msgid "Leave empty to keep the current excerpt."
+msgstr ""
+
+#: classes/integrations/wordpress.php:159
+msgid "— No change —"
+msgstr ""
+
+#: classes/integrations/wordpress.php:160
+msgid "Leave on \"No change\" to keep the current status."
+msgstr ""
+
+#: classes/integrations/wordpress.php:174
+msgid "Get user"
+msgstr ""
+
+#: classes/integrations/wordpress.php:175
+msgid "Load a user by ID to use their name or email in later steps (e.g. a welcome email)."
+msgstr ""
+
+#: classes/integrations/wordpress.php:182
+msgid "Login"
+msgstr ""
+
+#: classes/integrations/wordpress.php:183
+msgid "Email"
+msgstr ""
+
+#: classes/integrations/wordpress.php:184
+msgid "Display name"
+msgstr ""
+
+#: classes/integrations/wordpress.php:190
+msgid "Get comment"
+msgstr ""
+
+#: classes/integrations/wordpress.php:191
+msgid "Load a comment by its ID — its text, author and status — e.g. to moderate it with AI."
+msgstr ""
+
+#: classes/integrations/wordpress.php:198
+msgid "Comment text"
+msgstr ""
+
+#: classes/integrations/wordpress.php:199
+msgid "Author name"
+msgstr ""
+
+#: classes/integrations/wordpress.php:200
+msgid "Author email"
+msgstr ""
+
+#: classes/integrations/wordpress.php:208
+msgid "Set comment status"
+msgstr ""
+
+#: classes/integrations/wordpress.php:209
+msgid "Approve, hold, spam, or trash a comment — the action half of a moderation flow."
+msgstr ""
+
+#: classes/integrations/wordpress.php:216
+msgid "Approved"
+msgstr ""
+
+#: classes/integrations/wordpress.php:217
+msgid "Pending (hold)"
+msgstr ""
+
+#: classes/integrations/wordpress.php:218
+msgid "Spam"
+msgstr ""
+
+#: classes/integrations/wordpress.php:219
+#: classes/integrations/wordpress.php:278
+msgid "Trash"
+msgstr ""
+
+#: classes/integrations/wordpress.php:228
+msgid "Get attachment URL"
+msgstr ""
+
+#: classes/integrations/wordpress.php:229
+msgid "Get the direct URL of a media item by its attachment ID."
+msgstr ""
+
+#: classes/integrations/wordpress.php:232
+#: classes/integrations/wordpress.php:325
+msgid "Attachment ID"
+msgstr ""
+
+#: classes/integrations/wordpress.php:233
+msgid "Size"
+msgstr ""
+
+#: classes/integrations/wordpress.php:235
+msgid "Which generated image size to link to."
+msgstr ""
+
+#: classes/integrations/wordpress.php:237
+msgid "Full size"
+msgstr ""
+
+#: classes/integrations/wordpress.php:238
+msgid "Large"
+msgstr ""
+
+#: classes/integrations/wordpress.php:239
+msgid "Medium"
+msgstr ""
+
+#: classes/integrations/wordpress.php:240
+msgid "Thumbnail"
+msgstr ""
+
+#: classes/integrations/wordpress.php:249
+msgid "Get recent posts"
+msgstr ""
+
+#: classes/integrations/wordpress.php:250
+msgid "Fetch the latest posts as a list — handy for a digest email. The \"summary\" output is a ready-to-paste bulleted list."
+msgstr ""
+
+#: classes/integrations/wordpress.php:254
+msgid "How many"
+msgstr ""
+
+#: classes/integrations/wordpress.php:255
+msgid "From the last N days (0 = any)"
+msgstr ""
+
+#: classes/integrations/wordpress.php:258
+msgid "Number found"
+msgstr ""
+
+#: classes/integrations/wordpress.php:259
+msgid "Posts"
+msgstr ""
+
+#: classes/integrations/wordpress.php:260
+msgid "Bulleted summary"
+msgstr ""
+
+#: classes/integrations/wordpress.php:266
+msgid "Change post status"
+msgstr ""
+
+#: classes/integrations/wordpress.php:267
+msgid "Publish, unpublish (draft), or trash a post."
+msgstr ""
+
+#: classes/integrations/wordpress.php:275
+msgid "Draft (unpublished)"
+msgstr ""
+
+#: classes/integrations/wordpress.php:287
+msgid "Set custom field"
+msgstr ""
+
+#: classes/integrations/wordpress.php:288
+msgid "Save a custom field (post meta) on a post."
+msgstr ""
+
+#: classes/integrations/wordpress.php:292
+msgid "Field name"
+msgstr ""
+
+#: classes/integrations/wordpress.php:300
+msgid "Add categories or tags"
+msgstr ""
+
+#: classes/integrations/wordpress.php:301
+msgid "Add one or more categories or tags to a post. Separate multiple with commas."
+msgstr ""
+
+#: classes/integrations/wordpress.php:305
+msgid "Type"
+msgstr ""
+
+#: classes/integrations/wordpress.php:308
+msgid "Categories"
+msgstr ""
+
+#: classes/integrations/wordpress.php:309
+msgid "Tags"
+msgstr ""
+
+#: classes/integrations/wordpress.php:312
+msgid "Names (comma-separated)"
+msgstr ""
+
+#: classes/integrations/wordpress.php:313
+msgid "Keep existing terms too"
+msgstr ""
+
+#: classes/integrations/wordpress.php:320
+msgid "Set featured image"
+msgstr ""
+
+#: classes/integrations/wordpress.php:321
+msgid "Set a post's featured image (thumbnail) from a media attachment ID."
+msgstr ""
+
+#: classes/rest.php:160
+#: classes/rest.php:209
+msgid "Flow not found."
+msgstr ""
+
+#: classes/rest.php:185
+msgid "Could not publish — flow not found."
+msgstr ""
+
+#: classes/rest.php:222
+#: classes/rest.php:236
+msgid "Run not found."
+msgstr ""
+
+#: classes/rest.php:267
+msgid "Too many requests — webhook rate limit exceeded."
+msgstr ""
+
+#: classes/rest.php:289
+msgid "Invalid webhook token."
+msgstr ""
+
+#: classes/rest.php:319
+msgid "Template not found."
+msgstr ""
+
+#: classes/rest.php:333
+#, php-format
+msgid "This template needs: %s. Install or activate those first."
+msgstr ""
+
+#: classes/rest.php:383
+msgid "Import file is missing a `flows` array."
+msgstr ""
+
+#: classes/templates.php:52
+msgid "Email Me When a Post Is Published"
+msgstr ""
+
+#: classes/templates.php:53
+msgid "Every time a post goes live, you get an email with its title and a link. Works out of the box — no other plugin needed."
+msgstr ""
+
+#: classes/templates.php:54
+#: classes/templates.php:85
+#: classes/templates.php:117
+#: classes/templates.php:160
+msgid "Basics"
+msgstr ""
+
+#: classes/templates.php:67
+msgid "Published: {{ fetch_post.title }}"
+msgstr ""
+
+#: classes/templates.php:68
+msgid ""
+"A post was just published on {{ site_name }}:\n"
+"\n"
+"{{ fetch_post.title }}\n"
+"{{ fetch_post.url }}"
+msgstr ""
+
+#: classes/templates.php:83
+msgid "Weekly Digest of New Posts"
+msgstr ""
+
+#: classes/templates.php:84
+msgid "Every Monday morning, an email with everything published in the last 7 days. Works out of the box — no other plugin needed."
+msgstr ""
+
+#: classes/templates.php:92
+#: classes/templates.php:484
+msgid "Every Monday at 08:00"
+msgstr ""
+
+#: classes/templates.php:100
+msgid "{{ site_name }} — this week's posts"
+msgstr ""
+
+#: classes/templates.php:101
+msgid ""
+"Published on {{ site_name }} in the last 7 days ({{ recent.count }} posts):\n"
+"\n"
+"{{ recent.summary }}"
+msgstr ""
+
+#: classes/templates.php:115
+msgid "Email Me About New Comments"
+msgstr ""
+
+#: classes/templates.php:116
+msgid "When someone comments, you get an email with who wrote it and what they said. Works out of the box — no other plugin needed."
+msgstr ""
+
+#: classes/templates.php:130
+msgid "New comment by {{ fetch_comment.author }}"
+msgstr ""
+
+#: classes/templates.php:131
+msgid ""
+"New comment on {{ site_name }}:\n"
+"\n"
+"From: {{ fetch_comment.author }} ({{ fetch_comment.author_email }})\n"
+"\n"
+"{{ fetch_comment.content }}"
+msgstr ""
+
+#: classes/templates.php:146
+msgid "🪙 HEADS — the coin flip gave: {{ flip.value }}"
+msgstr ""
+
+#: classes/templates.php:151
+msgid "🪙 TAILS — the coin flip gave: {{ flip.value }}"
+msgstr ""
+
+#: classes/templates.php:158
+msgid "Coin Flip — Learn Branching"
+msgstr ""
+
+#: classes/templates.php:159
+msgid "Press Test once: a coin is flipped and only the matching path runs. The fastest way to understand Branch By Value."
+msgstr ""
+
+#: classes/templates.php:167
+msgid "Manual"
+msgstr ""
+
+#: classes/templates.php:199
+msgid "Email Me on Every New Order"
+msgstr ""
+
+#: classes/templates.php:200
+msgid "The moment an order comes in, you get an email with the customer, the items, and the total."
+msgstr ""
+
+#: classes/templates.php:214
+msgid "New order #{{ order.id }} — {{ order.total }} {{ order.currency }}"
+msgstr ""
+
+#: classes/templates.php:215
+msgid ""
+"New order on {{ site_name }}!\n"
+"\n"
+"Customer: {{ order.customer_name }} ({{ order.customer_email }})\n"
+"Total: {{ order.total }} {{ order.currency }}\n"
+"Payment: {{ order.payment_method }}\n"
+"\n"
+"Items:\n"
+"{{ order.items_summary }}"
+msgstr ""
+
+#: classes/templates.php:230
+msgid "AI Thank-You Note on Completed Orders"
+msgstr ""
+
+#: classes/templates.php:231
+msgid "When an order completes, AI Engine writes a short personal thank-you mentioning what they bought, saved on the order as a customer-visible note."
+msgstr ""
+
+#: classes/templates.php:244
+msgid ""
+"Write a warm 2-sentence thank-you note for {{ order.customer_name }} who just received their order from \"{{ site_name }}\". Mention what they bought naturally. No greeting line, no sign-off.\n"
+"\n"
+"Items:\n"
+"{{ order.items_summary }}"
+msgstr ""
+
+#: classes/templates.php:267
+msgid "AI Draft Writer"
+msgstr ""
+
+#: classes/templates.php:269
+msgid "On a schedule, AI Engine writes a full blog post about your topic and saves it as a draft for you to review. Edit the topic inside the AI step before activating."
+msgstr ""
+
+#: classes/templates.php:270
+#: classes/templates.php:304
+#: classes/templates.php:338
+#: classes/templates.php:392
+#: classes/templates.php:441
+msgid "AI"
+msgstr ""
+
+#: classes/templates.php:276
+msgid "Every week at 8:00 AM"
+msgstr ""
+
+#: classes/templates.php:278
+msgid ""
+"You write for the blog \"{{ site_name }}\".\n"
+"\n"
+"TOPIC (edit me!): practical tips our readers can use — pick one fresh, specific angle each time.\n"
+"\n"
+"Write an original blog post on that topic: an engaging title and 4-6 short HTML paragraphs (<p>…</p>, optional <h2> subheadings). No invented facts.\n"
+"\n"
+"Return ONLY JSON: {\"title\": \"…\", \"content\": \"…\"}"
+msgstr ""
+
+#: classes/templates.php:301
+msgid "Turn Feeds Into Drafts"
+msgstr ""
+
+#: classes/templates.php:303
+msgid "When a new item appears in a feed you choose, AI Engine rewrites it in your site's voice and saves it as a draft, linking back to the source. Set the feed URL in the trigger before activating."
+msgstr ""
+
+#: classes/templates.php:310
+msgid "When a new RSS item appears"
+msgstr ""
+
+#: classes/templates.php:312
+msgid ""
+"You write for the blog \"{{ site_name }}\".\n"
+"\n"
+"Below is a news item from another site. Write a SHORT original post about it in our own voice: summarise the key points in your own words (never copy sentences), 2-4 HTML paragraphs, and end with: <p>Source: <a href=\"{{ trigger.link }}\">{{ trigger.title }}</a></p>\n"
+"\n"
+"Return ONLY JSON: {\"title\": \"…\", \"content\": \"…\"}\n"
+"\n"
+"SOURCE TITLE: {{ trigger.title }}\n"
+"SOURCE CONTENT:\n"
+"{{ trigger.content }}"
+msgstr ""
+
+#: classes/templates.php:335
+msgid "Write Excerpts Automatically"
+msgstr ""
+
+#: classes/templates.php:337
+msgid "Every time a post is published, AI Engine writes a one-sentence excerpt and saves it on the post."
+msgstr ""
+
+#: classes/templates.php:349
+msgid ""
+"Write a single-sentence excerpt (max 160 chars, plain text, no quotes).\n"
+"\n"
+"Title: {{ fetch_post.title }}\n"
+"\n"
+"Content:\n"
+"{{ fetch_post.content }}"
+msgstr ""
+
+#: classes/templates.php:382
+msgid "Comment #{{ trigger.comment_id }} by {{ fetch_comment.author }} classified as: {{ classify.text }}"
+msgstr ""
+
+#: classes/templates.php:389
+msgid "Moderate Comments With AI"
+msgstr ""
+
+#: classes/templates.php:391
+msgid "When a comment is posted, AI Engine reads it and classifies it — spam is marked as spam, insulting comments are held for review, legitimate ones are logged."
+msgstr ""
+
+#: classes/templates.php:403
+msgid ""
+"Classify this WordPress comment as exactly one word: legitimate, spam, or insulting. Reply with the single word only, lowercase.\n"
+"\n"
+"Author: {{ fetch_comment.author }}\n"
+"Comment:\n"
+"{{ fetch_comment.content }}"
+msgstr ""
+
+#: classes/templates.php:438
+msgid "Welcome New Users by Email"
+msgstr ""
+
+#: classes/templates.php:440
+msgid "When someone registers, AI Engine drafts a friendly 3-sentence welcome email and sends it to them."
+msgstr ""
+
+#: classes/templates.php:452
+msgid "Write a friendly 3-sentence welcome email for a new user named {{ fetch_user.display_name }} who just registered on the site \"{{ site_name }}\". Warm but not pushy. No greeting line — start with the message itself."
+msgstr ""
+
+#: classes/templates.php:456
+msgid "Welcome — glad to have you here!"
+msgstr ""
+
+#: classes/templates.php:475
+msgid "Weekly Content Brief"
+msgstr ""
+
+#: classes/templates.php:477
+msgid "Every Monday at 8am, picks one recent post and emails you an AI-written brief with what worked and what to write next."
+msgstr ""
+
+#: classes/templates.php:478
+msgid "Schedule"
+msgstr ""
+
+#: classes/templates.php:491
+msgid ""
+"Here are the posts published on \"{{ site_name }}\" in the last 7 days:\n"
+"\n"
+"{{ recent.summary }}\n"
+"\n"
+"Write a short brief for the site owner:\n"
+"1. A one-line recap of the week's publishing.\n"
+"2. Which topic looks most promising to expand, and why.\n"
+"3. Two concrete follow-up post titles to consider.\n"
+"\n"
+"Keep it under 150 words, plain text, no greeting line."
+msgstr ""
+
+#: classes/templates.php:495
+msgid "Weekly content brief — {{ today_human }}"
+msgstr ""
+
+#: classes/templates.php:514
+msgid "Daily SEO Report"
+msgstr ""
+
+#: classes/templates.php:516
+msgid "Every morning, the SEO Engine site snapshot is summarised by AI Engine and emailed to you. Score breakdown, monthly visitors, top posts, and one concrete suggestion."
+msgstr ""
+
+#: classes/templates.php:517
+msgid "SEO"
+msgstr ""
+
+#: classes/templates.php:523
+msgid "Every morning at 09:00"
+msgstr ""
+
+#: classes/templates.php:526
+msgid ""
+"You are an SEO assistant emailing the site owner each morning. Be concise — 4 short paragraphs max.\n"
+"\n"
+"1. Site health: \"{{ summary.summary_text }}\".\n"
+"2. Top posts this month: {{ summary.top_posts }}.\n"
+"3. One concrete action they could take today, based on the numbers.\n"
+"4. Sign off with a single sentence of encouragement.\n"
+"\n"
+"Plain text, no markdown, no greeting line."
+msgstr ""
+
+#: classes/templates.php:530
+msgid "Daily SEO report — {{ summary.summary_text }}"
+msgstr ""
