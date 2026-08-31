@@ -98,6 +98,9 @@ class Meow_MWFLOW_Integrations_Wordpress {
             Meow_MWFLOW_SDK::output( 'author_id', __( 'Author ID', 'meow-workflow' ), 'user_id' ),
             Meow_MWFLOW_SDK::output( 'featured_image_id', __( 'Featured image ID', 'meow-workflow' ), 'attachment_id' ),
             Meow_MWFLOW_SDK::output( 'featured_image_url', __( 'Featured image URL', 'meow-workflow' ), 'url' ),
+            Meow_MWFLOW_SDK::output( 'categories', __( 'Categories (names)', 'meow-workflow' ), 'string' ),
+            Meow_MWFLOW_SDK::output( 'date', __( 'Published date', 'meow-workflow' ), 'string' ),
+            Meow_MWFLOW_SDK::output( 'edit_url', __( 'Edit link (wp-admin)', 'meow-workflow' ), 'url' ),
           ],
           'callback'    => [ __CLASS__, 'callback_get_post' ],
         ] ),
@@ -519,6 +522,8 @@ class Meow_MWFLOW_Integrations_Wordpress {
 
   private static function format_post( $post ) {
     $thumb_id = (int) get_post_thumbnail_id( $post );
+    $terms = wp_get_post_terms( $post->ID, 'category', [ 'fields' => 'names' ] );
+    $categories = is_wp_error( $terms ) ? [] : $terms;
     return [
       'id'                 => $post->ID,
       'title'              => $post->post_title,
@@ -528,6 +533,9 @@ class Meow_MWFLOW_Integrations_Wordpress {
       'author_id'          => (int) $post->post_author,
       'featured_image_id'  => $thumb_id,
       'featured_image_url' => $thumb_id ? wp_get_attachment_image_url( $thumb_id, 'full' ) : '',
+      'categories'         => implode( ', ', $categories ),
+      'date'               => get_the_date( '', $post ),
+      'edit_url'           => admin_url( 'post.php?post=' . $post->ID . '&action=edit' ),
     ];
   }
 }

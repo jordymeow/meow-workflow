@@ -181,7 +181,7 @@ class Meow_MWFLOW_Integrations_Core {
         Meow_MWFLOW_SDK::action( [
           'id'          => 'send_email',
           'name'        => __( 'Send email', 'meow-workflow' ),
-          'description' => __( 'Send a plain-text email via wp_mail.', 'meow-workflow' ),
+          'description' => __( 'Send an email via wp_mail. Plain text by default, or HTML for links and images.', 'meow-workflow' ),
           'icon'        => 'mail',
           'inputs'      => [
             Meow_MWFLOW_SDK::input( 'to', __( 'To', 'meow-workflow' ), 'email', [
@@ -196,6 +196,14 @@ class Meow_MWFLOW_Integrations_Core {
             Meow_MWFLOW_SDK::input( 'body', __( 'Body', 'meow-workflow' ), 'longtext', [
               'required'    => true,
               'placeholder' => __( "Hi,\n\nYour workflow just ran.\n", 'meow-workflow' ),
+            ] ),
+            Meow_MWFLOW_SDK::input( 'format', __( 'Format', 'meow-workflow' ), 'select', [
+              'default'     => 'text',
+              'options'     => [
+                [ 'value' => 'text', 'label' => __( 'Plain text', 'meow-workflow' ) ],
+                [ 'value' => 'html', 'label' => __( 'HTML', 'meow-workflow' ) ],
+              ],
+              'description' => __( 'HTML lets you write links and images, e.g. <a href="{{ get_post1.url }}">{{ get_post1.title }}</a>. Line breaks still become paragraphs.', 'meow-workflow' ),
             ] ),
           ],
           'outputs'     => [ Meow_MWFLOW_SDK::output( 'sent', __( 'Email sent', 'meow-workflow' ), 'boolean' ) ],
@@ -290,11 +298,15 @@ class Meow_MWFLOW_Integrations_Core {
   }
 
   public static function callback_send_email( $inputs ) {
-    $sent = wp_mail(
-      $inputs['to'] ?? '',
-      $inputs['subject'] ?? '',
-      $inputs['body'] ?? ''
-    );
+    $body    = (string) ( $inputs['body'] ?? '' );
+    $headers = [];
+    if ( ( $inputs['format'] ?? 'text' ) === 'html' ) {
+      $headers[] = 'Content-Type: text/html; charset=UTF-8';
+      // The body is typed in a textarea, so keep its line breaks meaningful
+      // even when the user mixes in <a> or <img> tags.
+      $body = wpautop( $body );
+    }
+    $sent = wp_mail( $inputs['to'] ?? '', $inputs['subject'] ?? '', $body, $headers );
     return [ 'sent' => (bool) $sent ];
   }
 

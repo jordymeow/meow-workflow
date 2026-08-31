@@ -19,3 +19,4 @@ $wpdb->query( $wpdb->prepare(
 wp_unschedule_hook( 'mwflow_run_step' );
 wp_unschedule_hook( 'mwflow_schedule_tick' );
 wp_unschedule_hook( 'mwflow_rss_tick' );
+wp_unschedule_hook( 'mwflow_watchdog' );

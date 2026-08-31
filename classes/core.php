@@ -3,7 +3,7 @@
 if ( !defined( 'ABSPATH' ) ) { exit; }
 
 class Meow_MWFLOW_Core {
-  const DB_VERSION = '6';
+  const DB_VERSION = '7';
 
   public $registry;
   public $runner;
@@ -67,6 +67,9 @@ class Meow_MWFLOW_Core {
     foreach ( $this->triggers as $trigger ) {
       $trigger->register_for_flows( $flows );
     }
+    // Not a trigger, but it belongs to the same "keep our cron events alive"
+    // pass: the watchdog that rescues runs whose step chain broke.
+    $this->runner->ensure_watchdog_scheduled();
   }
 
   public function get_active_flows() {
@@ -318,6 +321,7 @@ class Meow_MWFLOW_Core {
       'flow_id'              => $flow_id,
       'status'               => $status,
       'started_at'           => $now,
+      'updated_at'           => $now,
       'finished_at'          => $now,
       'trigger_payload_json' => wp_json_encode( $payload ),
       'steps_json'           => wp_json_encode( $steps ),
@@ -343,6 +347,7 @@ class Meow_MWFLOW_Core {
       'flow_id'              => $flow_id,
       'status'               => 'running',
       'started_at'           => $now,
+      'updated_at'           => $now,
       'finished_at'          => null,
       'trigger_payload_json' => wp_json_encode( $payload ),
       'steps_json'           => null,
@@ -377,7 +382,8 @@ class Meow_MWFLOW_Core {
 
   /**
    * Persist the working state of a run. Optionally advances `current_step_id`
-   * to the next node in the queue.
+   * to the next node in the queue. `updated_at` doubles as the run's heartbeat:
+   * the watchdog uses it to tell a slow node from an interrupted run.
    */
   public function save_run_state( $run_id, $state ) {
     global $wpdb;
@@ -386,9 +392,30 @@ class Meow_MWFLOW_Core {
       [
         'current_step_id' => $state['queue'][0] ?? null,
         'step_state_json' => wp_json_encode( $state ),
+        'updated_at'      => current_time( 'mysql' ),
       ],
       [ 'id' => $run_id ]
     );
+  }
+
+  /**
+   * Runs still marked `running` whose heartbeat is older than $seconds.
+   * Either the node is genuinely taking that long, or the process that was
+   * advancing the run died (fatal, timeout, missed cron pass). The watchdog
+   * in the runner decides which, by looking for a pending step event.
+   */
+  public function get_stalled_runs( $seconds, $limit = 20 ) {
+    global $wpdb;
+    return (array) $wpdb->get_results( $wpdb->prepare(
+      "SELECT id, flow_id, started_at, updated_at
+       FROM {$wpdb->prefix}mwflow_runs
+       WHERE status = 'running'
+         AND updated_at IS NOT NULL
+         AND updated_at < DATE_SUB( %s, INTERVAL %d SECOND )
+       ORDER BY id ASC
+       LIMIT %d",
+      current_time( 'mysql' ), (int) $seconds, (int) $limit
+    ) );
   }
 
   /**
@@ -401,9 +428,17 @@ class Meow_MWFLOW_Core {
     $update = [
       'status'      => $status,
       'finished_at' => $now,
+      'updated_at'  => $now,
       'current_step_id' => null,
       'error'       => $error ? substr( (string) $error, 0, 1000 ) : null,
     ];
+    // Callers that finalize from outside the step loop (the fatal guard) have
+    // no state in hand. Fall back to the last checkpoint so the run still gets
+    // a timeline instead of an empty one.
+    if ( !is_array( $state ) ) {
+      $loaded = $this->load_run_state( $run_id );
+      $state = $loaded ? $loaded['state'] : null;
+    }
     if ( is_array( $state ) ) {
       $update['step_state_json'] = wp_json_encode( $state );
       $update['steps_json'] = wp_json_encode( $this->state_to_steps( $state ) );
@@ -551,6 +586,7 @@ class Meow_MWFLOW_Core {
       flow_id BIGINT(20) UNSIGNED NOT NULL,
       status VARCHAR(16) NOT NULL DEFAULT 'queued',
       started_at DATETIME NULL,
+      updated_at DATETIME NULL,
       finished_at DATETIME NULL,
       trigger_payload_json LONGTEXT NULL,
       steps_json LONGTEXT NULL,
@@ -559,7 +595,8 @@ class Meow_MWFLOW_Core {
       error TEXT NULL,
       PRIMARY KEY (id),
       KEY flow_id (flow_id),
-      KEY status (status)
+      KEY status (status),
+      KEY updated_at (updated_at)
     ) $charset;";
 
     dbDelta( $flows_sql );
@@ -571,6 +608,15 @@ class Meow_MWFLOW_Core {
       "UPDATE {$wpdb->prefix}mwflow_flows
        SET definition_draft_json = definition_json
        WHERE definition_draft_json IS NULL"
+    );
+
+    // On upgrade to v7: `updated_at` is the runner's heartbeat, used by the
+    // watchdog to spot interrupted runs. Seed it from started_at so pre-v7
+    // rows don't all look stalled the moment the watchdog first runs.
+    $wpdb->query(
+      "UPDATE {$wpdb->prefix}mwflow_runs
+       SET updated_at = COALESCE( finished_at, started_at )
+       WHERE updated_at IS NULL"
     );
   }
 }

@@ -3,9 +3,9 @@ Contributors: TigrouMeow
 Tags: workflow, automation, ai, no-code, flows
 Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
-Tested up to: 7.0
-Requires PHP: 7.4
-Stable tag: 0.1.1
+Tested up to: 7.1
+Requires PHP: 8.1
+Stable tag: 0.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,16 @@ No. AI steps use your own installed AI Engine (and your own API keys). The HTTP 
 4. Schedule a workflow — this weekly content brief runs every Monday, gathers recent posts, and writes a summary with AI Engine.
 
 == Changelog ==
+
+= 0.1.2 (2026/08/31) =
+* Fix: Scheduled workflows no longer stall before the final node.
+* Fix: Async runs now process a full batch of nodes per cron pass instead of a single node.
+* Add: HTML format option for the Send Email node.
+* Add: Categories, date and edit link to post node outputs.
+* Update: Synced the shared common library with the new dashboard board, and updated the tested and PHP requirements.
+* 🎵 Discuss with others about Meow Workflow on [the Discord](https://discord.gg/bHDGh38).
+* 🌴 Keep us motivated with [a little review here](https://wordpress.org/support/plugin/meow-workflow/reviews/). Thank you!
+* 🥰 If you want to help us, check our [Patreon](https://www.patreon.com/meowapps). Thank you!
 
 = 0.1.1 (2026/06/27) =
 * Update: Moved Workflow Engine under the Meow Apps menu instead of having its own top-level menu entry.

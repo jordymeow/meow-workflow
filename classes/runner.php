@@ -17,11 +17,16 @@ if ( !defined( 'ABSPATH' ) ) { exit; }
  *     nodes:    { node_id: node },                       // copied at start, immutable
  *   }
  *
- * One `run_step` call pops one node off the queue, executes it, appends any
- * unblocked children to the queue, and persists the new state. The next call
- * picks up where it left off — works both for in-request loops (sync, e.g.
- * "Test once") and for `wp_schedule_single_event`-driven async runs (webhook,
- * wp_hook, schedule triggers).
+ * Each step pops one node off the queue, executes it, appends any unblocked
+ * children, and persists the new state, so a run can always pick up where it
+ * left off. Three paths drive that loop: in-request (sync, "Test once"), one
+ * step per REST call (stepwise, so the canvas can animate), and wp_cron
+ * (async: webhook, wp_hook, schedule and RSS triggers).
+ *
+ * An async pass drains as many nodes as fit in PASS_BUDGET_SECONDS before
+ * handing the rest to the next pass, and a watchdog picks up runs whose chain
+ * of cron events was broken. Both matter more than they look: see the comments
+ * on PASS_BUDGET_SECONDS and watchdog().
  *
  * Special node kinds handled directly here (no integration callback needed):
  *   - "trigger"   — entry point; emits the trigger payload as its output
@@ -35,8 +40,40 @@ class Meow_MWFLOW_Runner {
   /** wp action hook name fired by wp_cron to advance an async run. */
   const STEP_HOOK = 'mwflow_run_step';
 
+  /** Recurring wp_cron hook that rescues runs whose step chain broke. */
+  const WATCHDOG_HOOK = 'mwflow_watchdog';
+
+  /** Custom cron interval the watchdog runs on. */
+  const WATCHDOG_SCHEDULE = 'mwflow_five_minutes';
+
+  /**
+   * A run counts as stalled when its heartbeat (`updated_at`) is older than this
+   * AND no step event is pending. Deliberately far longer than any node should
+   * take: the heartbeat is refreshed before every node, so only a SINGLE node
+   * running longer than this can produce a false positive, and a false positive
+   * means resuming a run that is in fact still executing, which would run its
+   * remaining steps twice. Half an hour is beyond what any host lets a PHP
+   * process live, so the cost is only a slower rescue when a chain really did
+   * break. Not a knob to lower casually.
+   */
+  const STALL_SECONDS = 1800;
+
+  /** How many times the watchdog will resurrect one run before failing it. */
+  const MAX_RESUMES = 3;
+
   /** Safety cap on how many steps a single sync run will execute. */
   const SYNC_STEP_LIMIT = 500;
+
+  /**
+   * Wall-clock budget for one async (wp_cron) pass, in seconds. WP-Cron only
+   * executes events that were already due when the pass started, so an event
+   * scheduled *during* a pass waits for the next one. Running a single node per
+   * pass therefore means one node per cron tick, five minutes per node on a
+   * typical server cron. We instead drain as much of the queue as fits in the
+   * budget, and only reschedule when we run out of time. Clamped against PHP's
+   * own max_execution_time so we hand control back before the process is killed.
+   */
+  const PASS_BUDGET_SECONDS = 20;
 
   /**
    * Hard ceiling on TOTAL steps executed across a whole run, on every path
@@ -53,9 +90,36 @@ class Meow_MWFLOW_Runner {
 
   private $core;
 
+  /** Run currently being advanced, so execute_next() can checkpoint mid-run. */
+  private $active_run_id = null;
+
+  /** Label of the node we are inside right now, or null. Read on shutdown. */
+  private $active_node_label = null;
+
+  private $shutdown_registered = false;
+
   public function __construct( $core ) {
     $this->core = $core;
     add_action( self::STEP_HOOK, [ $this, 'run_step' ], 10, 1 );
+    add_action( self::WATCHDOG_HOOK, [ $this, 'watchdog' ] );
+    add_filter( 'cron_schedules', [ $this, 'add_cron_schedule' ] );
+  }
+
+  public function add_cron_schedule( $schedules ) {
+    if ( !isset( $schedules[ self::WATCHDOG_SCHEDULE ] ) ) {
+      $schedules[ self::WATCHDOG_SCHEDULE ] = [
+        'interval' => 5 * MINUTE_IN_SECONDS,
+        'display'  => __( 'Every five minutes (Meow Workflow)', 'meow-workflow' ),
+      ];
+    }
+    return $schedules;
+  }
+
+  /** Called on init: makes sure the watchdog event exists. */
+  public function ensure_watchdog_scheduled() {
+    if ( !wp_next_scheduled( self::WATCHDOG_HOOK ) ) {
+      wp_schedule_event( time() + MINUTE_IN_SECONDS, self::WATCHDOG_SCHEDULE, self::WATCHDOG_HOOK );
+    }
   }
 
   /* ------------------------------------------------------------------ */
@@ -121,6 +185,10 @@ class Meow_MWFLOW_Runner {
     }
 
     $state = $this->init_state( $definition, $entry['id'], $payload );
+    // The watchdog treats these very differently: an async run is driven by
+    // wp_cron and can be safely resumed, while a stepwise/sync run is driven by
+    // the browser and must never resurrect itself once the user has walked away.
+    $state['mode'] = $stepwise ? 'stepwise' : ( $sync ? 'sync' : 'async' );
     $run_id = $this->core->start_run( $flow_id, $payload, $state );
 
     // Stepwise = the editor's "Test once": the run is created but nothing
@@ -139,7 +207,8 @@ class Meow_MWFLOW_Runner {
       return $this->advance_inline( $run_id, $flow_id, $state );
     }
 
-    // Async: schedule the first step. Each step schedules the next.
+    // Async: hand the run to wp_cron. The pass that picks it up drains as much
+    // of the queue as it can, and only reschedules if it runs out of time.
     wp_schedule_single_event( time(), self::STEP_HOOK, [ $run_id ] );
     return [
       'run_id'          => $run_id,
@@ -150,8 +219,8 @@ class Meow_MWFLOW_Runner {
   }
 
   /**
-   * WP-cron action handler. Advances an in-progress run by one step.
-   * Schedules itself again if more work remains.
+   * WP-cron action handler. Advances an in-progress run as far as it can within
+   * one pass, then reschedules itself if work remains.
    */
   public function run_step( $run_id ) {
     $run_id = (int) $run_id;
@@ -168,27 +237,30 @@ class Meow_MWFLOW_Runner {
     }
 
     $state = $loaded['state'];
-    if ( empty( $state['queue'] ) && !$this->maybe_continue_loops( $state ) ) {
-      $this->core->finalize_run( $run_id, 'done', $state );
-      return;
-    }
+    $this->active_run_id = $run_id;
+    $deadline = microtime( true ) + $this->pass_budget();
 
     try {
-      $this->execute_next( $state );
-      // A drained queue may just mean the current For Each iteration ended.
-      if ( empty( $state['queue'] ) ) {
-        $this->maybe_continue_loops( $state );
+      while ( true ) {
+        if ( empty( $state['queue'] ) && !$this->maybe_continue_loops( $state ) ) { break; }
+        $this->execute_next( $state );
+        // A drained queue may just mean the current For Each iteration ended.
+        if ( empty( $state['queue'] ) ) {
+          $this->maybe_continue_loops( $state );
+        }
+        $this->core->save_run_state( $run_id, $state );
+        if ( empty( $state['queue'] ) ) { break; }
+        // Out of budget: hand the rest to the next cron pass. The queue is
+        // already persisted, so nothing is lost.
+        if ( microtime( true ) >= $deadline ) {
+          wp_schedule_single_event( time(), self::STEP_HOOK, [ $run_id ] );
+          return;
+        }
       }
-      $this->core->save_run_state( $run_id, $state );
-      if ( !empty( $state['queue'] ) ) {
-        wp_schedule_single_event( time(), self::STEP_HOOK, [ $run_id ] );
-      }
-      else {
-        $this->core->finalize_run( $run_id, 'done', $state );
-        $this->core->logging->info( 'Flow completed.', [
-          'flow_id' => $loaded['flow_id'], 'run_id' => $run_id,
-        ] );
-      }
+      $this->core->finalize_run( $run_id, 'done', $state );
+      $this->core->logging->info( 'Flow completed.', [
+        'flow_id' => $loaded['flow_id'], 'run_id' => $run_id,
+      ] );
     }
     catch ( \Throwable $e ) {
       $error = $e->getMessage();
@@ -196,6 +268,125 @@ class Meow_MWFLOW_Runner {
       $this->core->logging->error( 'Flow failed.', [
         'flow_id' => $loaded['flow_id'], 'run_id' => $run_id, 'error' => $error,
       ] );
+    }
+    finally {
+      $this->active_run_id = null;
+      $this->disarm_fatal_guard();
+    }
+  }
+
+  /**
+   * Seconds one cron pass may spend executing nodes. Kept comfortably under
+   * PHP's max_execution_time so we reschedule instead of being killed mid-node.
+   */
+  private function pass_budget() {
+    $budget = (int) apply_filters( 'mwflow_pass_budget_seconds', self::PASS_BUDGET_SECONDS );
+    $limit = (int) ini_get( 'max_execution_time' );
+    if ( $limit > 0 ) {
+      $budget = min( $budget, max( 5, (int) floor( $limit * 0.6 ) ) );
+    }
+    return max( 5, $budget );
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Watchdog: rescues runs whose step chain broke                      */
+  /* ------------------------------------------------------------------ */
+
+  /**
+   * A run advances by scheduling the next step as a wp_cron event. If that
+   * event is ever lost (the process was killed mid-node, the cron option was
+   * clobbered by an overlapping pass, an object cache served a stale copy),
+   * nothing reschedules it and the run sits in `running` forever. This is the
+   * single most confusing failure a user can hit, because every recorded step
+   * looks fine. So: any run whose heartbeat went quiet and that has no pending
+   * step event gets pushed again, a few times, then honestly marked failed.
+   */
+  public function watchdog() {
+    // Never let a filter shorten this below the constant: see STALL_SECONDS.
+    $stall = max( self::STALL_SECONDS,
+      (int) apply_filters( 'mwflow_stall_seconds', self::STALL_SECONDS ) );
+    foreach ( $this->core->get_stalled_runs( $stall ) as $row ) {
+      $run_id = (int) $row->id;
+      // Still queued: the pass just hasn't come around yet. Leave it alone.
+      if ( wp_next_scheduled( self::STEP_HOOK, [ $run_id ] ) ) { continue; }
+
+      $loaded = $this->core->load_run_state( $run_id );
+      if ( !$loaded || $loaded['status'] !== 'running' ) { continue; }
+
+      $state = $loaded['state'];
+
+      // Stepwise ("Test once") and sync runs are driven by a browser request.
+      // If one went quiet, the user closed the tab or the request died. Do NOT
+      // silently finish it in the background, just close the books on it.
+      // Runs started before this version carry no mode marker; they land here
+      // too, on purpose: resuming a day-old run that posts and emails is worse
+      // than admitting it never finished.
+      if ( ( $state['mode'] ?? '' ) !== 'async' ) {
+        $this->core->finalize_run( $run_id, 'failed', $state,
+          __( 'The run was interrupted before it could finish.', 'meow-workflow' ) );
+        continue;
+      }
+
+      $resumes = (int) ( $state['resumes'] ?? 0 );
+      if ( $resumes >= self::MAX_RESUMES ) {
+        $error = sprintf(
+          /* translators: %d: number of resume attempts. */
+          __( 'The run was interrupted and could not be resumed after %d attempts.', 'meow-workflow' ),
+          self::MAX_RESUMES
+        );
+        $this->core->finalize_run( $run_id, 'failed', $state, $error );
+        $this->core->logging->error( 'Flow abandoned after repeated interruptions.', [
+          'flow_id' => $loaded['flow_id'], 'run_id' => $run_id,
+        ] );
+        continue;
+      }
+
+      $state['resumes'] = $resumes + 1;
+      $this->core->save_run_state( $run_id, $state );
+      wp_schedule_single_event( time(), self::STEP_HOOK, [ $run_id ] );
+      $this->core->logging->info( 'Resuming an interrupted run.', [
+        'flow_id' => $loaded['flow_id'], 'run_id' => $run_id, 'attempt' => $state['resumes'],
+      ] );
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Fatal guard: a node that kills PHP must not leave a zombie run     */
+  /* ------------------------------------------------------------------ */
+
+  /**
+   * Armed right before a node executes, disarmed as soon as it returns. If PHP
+   * dies in between (max_execution_time, memory_limit, a fatal in third-party
+   * code), the shutdown handler is our only chance to record what happened.
+   */
+  private function arm_fatal_guard( $label ) {
+    $this->active_node_label = $label;
+    if ( !$this->shutdown_registered ) {
+      $this->shutdown_registered = true;
+      register_shutdown_function( [ $this, 'on_shutdown' ] );
+    }
+  }
+
+  private function disarm_fatal_guard() {
+    $this->active_node_label = null;
+  }
+
+  public function on_shutdown() {
+    if ( $this->active_node_label === null || !$this->active_run_id ) { return; }
+    $error = error_get_last();
+    $fatal = [ E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR ];
+    if ( !$error || !in_array( $error['type'], $fatal, true ) ) { return; }
+    try {
+      // No state passed: finalize_run reloads the checkpoint we wrote just
+      // before the node started, so the timeline still shows where it died.
+      $this->core->finalize_run( $this->active_run_id, 'failed', null, sprintf(
+        /* translators: 1: step name, 2: PHP error message. */
+        __( 'The run was interrupted while executing "%1$s": %2$s', 'meow-workflow' ),
+        $this->active_node_label, $error['message']
+      ) );
+    }
+    catch ( \Throwable $e ) {
+      // Shutting down after a fatal, nothing useful left to do.
     }
   }
 
@@ -219,6 +410,7 @@ class Meow_MWFLOW_Runner {
       ];
     }
 
+    $this->active_run_id = $run_id;
     try {
       if ( !empty( $state['queue'] ) ) {
         $this->execute_next( $state );
@@ -255,6 +447,10 @@ class Meow_MWFLOW_Runner {
         'steps'  => $this->state_to_steps_for_return( $state ),
       ];
     }
+    finally {
+      $this->active_run_id = null;
+      $this->disarm_fatal_guard();
+    }
   }
 
   /* ------------------------------------------------------------------ */
@@ -263,6 +459,7 @@ class Meow_MWFLOW_Runner {
 
   private function advance_inline( $run_id, $flow_id, $state ) {
     $i = 0;
+    $this->active_run_id = $run_id;
     try {
       while ( $i++ < self::SYNC_STEP_LIMIT ) {
         if ( empty( $state['queue'] ) && !$this->maybe_continue_loops( $state ) ) {
@@ -290,6 +487,10 @@ class Meow_MWFLOW_Runner {
         'error'  => $error,
         'steps'  => $this->state_to_steps_for_return( $state ),
       ];
+    }
+    finally {
+      $this->active_run_id = null;
+      $this->disarm_fatal_guard();
     }
   }
 
@@ -425,6 +626,15 @@ class Meow_MWFLOW_Runner {
       'attempts'   => $prev_attempts + 1,
     ];
 
+    // Persist the "running" marker BEFORE the node executes. If PHP dies inside
+    // it, the run row still names the node it died on. Otherwise the state is
+    // only written afterwards and a crashed node looks like it never started.
+    // Also refreshes the heartbeat, so the watchdog gives long nodes their time.
+    if ( $this->active_run_id ) {
+      $this->core->save_run_state( $this->active_run_id, $state );
+    }
+    $this->arm_fatal_guard( $node['data']['label'] ?? $node_id );
+
     $attempt = 0;
     $last_error = null;
     while ( $attempt < $max_attempts ) {
@@ -488,6 +698,7 @@ class Meow_MWFLOW_Runner {
         }
 
         // Success — record and enqueue children.
+        $this->disarm_fatal_guard();
         $state['context'][ $node_id ] = $output;
         $state['states'][ $node_id ] = array_merge( $state['states'][ $node_id ], [
           'status'      => 'done',
@@ -515,6 +726,7 @@ class Meow_MWFLOW_Runner {
     }
 
     // Permanent failure after all attempts. Apply on_failure policy.
+    $this->disarm_fatal_guard();
     $state['states'][ $node_id ] = array_merge( $state['states'][ $node_id ], [
       'status'      => 'failed',
       'error'       => $last_error->getMessage(),
