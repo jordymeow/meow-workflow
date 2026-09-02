@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
+import styled, { createGlobalStyle } from 'styled-components';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { NekoButton } from '@neko-ui';
 import AiAssistMenu from '../components/AiAssistMenu';
@@ -21,6 +21,13 @@ function loadFavorites() {
     return new Set(Array.isArray(arr) ? arr : []);
   } catch { return new Set(); }
 }
+
+// The canvas needs the vertical space: while the editor is open, the admin
+// notices WordPress prints above the app (the Meow review banner, update nags)
+// are hidden. They come back on the Workflows list.
+const EditorGlobalStyle = createGlobalStyle`
+  body.mwflow-editor-open #wpbody-content .notice:not(.inline) { display: none !important; }
+`;
 
 const Shell = styled.div`
   display: grid;
@@ -303,6 +310,11 @@ export default function Editor({ flowId, onBack }) {
   const savedSnapshotRef = useRef(null); // JSON of last persisted state
   const saveTimerRef = useRef(null);
 
+  useEffect(() => {
+    document.body.classList.add('mwflow-editor-open');
+    return () => document.body.classList.remove('mwflow-editor-open');
+  }, []);
+
   // Module picker modal + toolbar favourites (persisted across sessions).
   const [pickerOpen, setPickerOpen] = useState(false);
   const [favorites, setFavorites] = useState(loadFavorites);
@@ -315,11 +327,20 @@ export default function Editor({ flowId, onBack }) {
     });
   }, []);
 
-  // Hydrate from server. The snapshot becomes the reference we compare against
-  // to decide whether the flow is "dirty" — avoids false "Unsaved" flickers
-  // from React 18 strict-mode effect re-runs.
+  // Hydrate from server ONCE per flow. The snapshot becomes the reference we
+  // compare against to decide whether the flow is "dirty" — avoids false
+  // "Unsaved" flickers from React 18 strict-mode effect re-runs.
+  //
+  // Every auto-save refetches the flow, so this must not re-hydrate on each
+  // refetch: anything typed between the save request and its response would be
+  // overwritten by the server copy and, since the snapshot then matched, lost
+  // for good. Later refetches only merge what the server owns: the unpublished
+  // flag and the webhook token it mints on activation.
+  const hydratedFlowIdRef = useRef(null);
   useEffect(() => {
-    if (flow.data) {
+    if (!flow.data) return;
+    if (hydratedFlowIdRef.current !== flow.data.id) {
+      hydratedFlowIdRef.current = flow.data.id;
       const next = {
         name: flow.data.name,
         definition: flow.data.definition || { nodes: [], edges: [] },
@@ -335,6 +356,12 @@ export default function Editor({ flowId, onBack }) {
       setHasUnpublished(!!flow.data.has_unpublished_changes);
       savedSnapshotRef.current = snapshot(next);
       setSaveState('saved');
+      return;
+    }
+    setHasUnpublished(!!flow.data.has_unpublished_changes);
+    const token = flow.data.trigger_config?.token;
+    if (token) {
+      setTriggerConfig((c) => (c.token === token ? c : { ...c, token }));
     }
   }, [flow.data]);
 
@@ -385,8 +412,9 @@ export default function Editor({ flowId, onBack }) {
       });
       savedSnapshotRef.current = snapshotBefore;
       setSaveState('saved');
-      // Every auto-save writes to the draft only — there are now unpublished
-      // changes until the user clicks Publish.
+      // Auto-save writes to the draft only, so assume there is now something to
+      // publish. The refetch below corrects this from the server, which compares
+      // draft and published (editing back to the live version reads as live).
       setHasUnpublished(true);
       qc.invalidateQueries({ queryKey: ['flows'] });
       qc.invalidateQueries({ queryKey: ['flow', flowId] });
@@ -750,6 +778,7 @@ export default function Editor({ flowId, onBack }) {
 
   return (
     <Shell $inspectorOpen={inspectorOpen} style={{ position: 'relative' }}>
+      <EditorGlobalStyle />
       {toast && (
         <Toast $ok={toast.ok} onClick={() => setToast(null)} title="Dismiss">
           <span>{toast.ok ? '✓' : '✕'}</span>

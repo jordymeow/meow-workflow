@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { NekoTypo, NekoSelect, NekoOption, NekoInput } from '@neko-ui';
 import { ChevronDown, ChevronRight, Copy, Check, Link2, AlertTriangle, SlidersHorizontal, Pencil } from 'lucide-react';
 import InputField from '../components/InputField';
-import { StepIcon, prettyName, previewRunValue } from './stepVisual';
+import { StepIcon, prettyName, previewRunValue, nestedRefs } from './stepVisual';
 import { PanelHead, PanelBody, Field, Callout } from './panelKit';
 
 const Sub = styled.div`
@@ -236,8 +236,9 @@ const RefIcon = styled.span`
 
 const RunBlock = styled.pre`
   margin: 0;
-  background: #0b1220;
-  color: #cbd5e1;
+  background: ${(p) => (p.$error ? '#fef2f2' : '#0b1220')};
+  color: ${(p) => (p.$error ? '#b91c1c' : '#cbd5e1')};
+  ${(p) => (p.$error ? 'border: 1px solid #fecaca;' : '')}
   padding: 10px 12px;
   border-radius: 8px;
   font-size: 11px;
@@ -380,13 +381,18 @@ function buildTokens(node, definition, integrations, stepsByNode, triggerSample)
     if (outs.length) {
       groups.push({
         label: 'Trigger',
-        items: outs.map((o) => ({
-          token: `{{ trigger.${o.id} }}`,
-          name: o.name,
-          value: previewRunValue(stepsByNode, triggerNode.id, o.id)
-            ?? previewRunValue(stepsByNode, 'trigger', o.id)
-            ?? previewRunValue(sampleByNode, 'trigger', o.id)
-        }))
+        items: outs.flatMap((o) => {
+          const raw = stepsByNode[triggerNode.id]?.output?.[o.id]
+            ?? stepsByNode.trigger?.output?.[o.id]
+            ?? (sampleFields.length ? triggerSample[o.id] : undefined);
+          return [{
+            token: `{{ trigger.${o.id} }}`,
+            name: o.name,
+            value: previewRunValue(stepsByNode, triggerNode.id, o.id)
+              ?? previewRunValue(stepsByNode, 'trigger', o.id)
+              ?? previewRunValue(sampleByNode, 'trigger', o.id)
+          }, ...nestedRefs(`trigger.${o.id}`, o.name, raw)];
+        })
       });
     }
   }
@@ -396,13 +402,14 @@ function buildTokens(node, definition, integrations, stepsByNode, triggerSample)
     const sp = it?.actions?.find((a) => a.id === n.data.action);
     const outs = sp?.outputs || [];
     if (!outs.length) continue;
+    // After a test run, JSON outputs are expanded into their nested paths.
     groups.push({
       label: prettyName(sp?.name || n.data.action),
-      items: outs.map((o) => ({
+      items: outs.flatMap((o) => [{
         token: `{{ ${n.id}.${o.id} }}`,
         name: o.name,
         value: previewRunValue(stepsByNode, n.id, o.id)
-      }))
+      }, ...nestedRefs(`${n.id}.${o.id}`, o.name, stepsByNode[n.id]?.output?.[o.id])])
     });
   }
   return groups;
@@ -487,6 +494,20 @@ export default function Inspector({ node, integrations, definition, lastRun, tri
           <RefIdEditor node={node} definition={definition} onRenameId={onRenameId} />
         )}
         {spec.description && <Callout>{spec.description}</Callout>}
+
+      {/* Last run first: after a test, what this step produced (or why it
+          failed) is what you came to see. Buried under Settings and Output it
+          was routinely missed, and people asked how to see the response. */}
+      {node.data._lastRun && (
+        <>
+          <SectionLabel style={{ color: status === 'done' ? '#059669' : '#dc2626' }}>
+            Last run · {status}
+          </SectionLabel>
+          {node.data._lastRun.error
+            ? <RunBlock $error>{node.data._lastRun.error}</RunBlock>
+            : <RunOutput output={node.data._lastRun.output} />}
+        </>
+      )}
 
       {/* ── 1. Settings — how to run this step ────────────────────── */}
       <Section>
@@ -598,29 +619,25 @@ export default function Inspector({ node, integrations, definition, lastRun, tri
             <SectionBody>
               <ReferenceHint>
                 Click a value to copy it, then paste it into a later step.
+                {status ? '' : ' Run the flow once and the nested fields of JSON outputs are listed here too.'}
               </ReferenceHint>
               <RefList>
-                {outputs.map((o) => (
+                {outputs.flatMap((o) => [
                   <CopyableRefRow
                     key={o.id}
                     ref_={`{{ ${node.id}.${o.id} }}`}
                     label={o.name}
-                  />
-                ))}
+                  />,
+                  ...nestedRefs(`${node.id}.${o.id}`, o.name, node.data._lastRun?.output?.[o.id]).map((it) => (
+                    <CopyableRefRow key={it.token} ref_={it.token} label={it.name} />
+                  ))
+                ])}
               </RefList>
             </SectionBody>
           )}
         </Section>
       )}
 
-      {node.data._lastRun && (
-        <>
-          <SectionLabel style={{ color: status === 'done' ? '#059669' : '#dc2626' }}>
-            Last run · {status}
-          </SectionLabel>
-          <RunOutput output={node.data._lastRun.output} />
-        </>
-      )}
       </PanelBody>
     </>
   );

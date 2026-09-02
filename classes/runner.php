@@ -1078,10 +1078,14 @@ class Meow_MWFLOW_Runner {
   }
 
   private function lookup_path( $path, $context ) {
+    // Accept JS-style indices too: a[0].b and a["b"] both become a.0.b.
+    // People coming from any API doc write brackets first.
+    $path = preg_replace( '/\[\s*(?:"([^"]*)"|\'([^\']*)\'|([^\]]*))\s*\]/', '.$1$2$3', $path );
     $parts = explode( '.', $path );
     $value = $context;
     foreach ( $parts as $key ) {
       $key = trim( $key );
+      if ( $key === '' ) { continue; }
       if ( is_array( $value ) && array_key_exists( $key, $value ) ) {
         $value = $value[ $key ];
       }
@@ -1188,6 +1192,13 @@ class Meow_MWFLOW_Runner {
           return $decoded !== null ? $decoded : $value;
         }
         return $value;
+      case 'string':
+      case 'longtext':
+      case 'url':
+      case 'email':
+        // A whole-string reference to a JSON output ({{ gemini.json }}) hands
+        // an array to a text field. Without this it lands as "Array".
+        return ( is_array( $value ) || is_object( $value ) ) ? wp_json_encode( $value ) : $value;
       default:
         return $value;
     }

@@ -5,7 +5,7 @@ Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.1.3
+Stable tag: 0.1.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,13 @@ No. AI steps use your own installed AI Engine (and your own API keys). The HTTP 
 4. Schedule a workflow — this weekly content brief runs every Monday, gathers recent posts, and writes a summary with AI Engine.
 
 == Changelog ==
+
+= 0.1.4 (2026/09/02) =
+* Fix: The editor no longer overwrites in-progress edits after an auto-save.
+* Add: The inspector shows the selected step's last run output and error at the top.
+* Add: References accept bracket indexes, and the Insert data menu lists nested fields of JSON outputs after a test run.
+* Fix: JSON objects are converted to text when used in text fields.
+* Fix: The unpublished-changes flag ignores derived trigger fields, so untouched flows show as live.
 
 = 0.1.3 (2026/09/02) =
 * Fix: Webhook URL now displays in the editor.

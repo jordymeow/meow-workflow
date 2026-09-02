@@ -95,6 +95,39 @@ class Meow_MWFLOW_Core {
   }
 
   /**
+   * Comparable form of a definition for the "unpublished changes" flag. The
+   * editor strips the trigger node's derived label/event and ReactFlow's
+   * runtime fields before saving, while templates and new flows are published
+   * with them, so a raw JSON comparison flagged untouched flows as "not live"
+   * after their first auto-save (even just toggling Active).
+   */
+  private function normalise_definition( $definition ) {
+    $nodes = [];
+    foreach ( (array) ( $definition['nodes'] ?? [] ) as $node ) {
+      $data = (array) ( $node['data'] ?? [] );
+      unset( $data['_lastRun'] );
+      if ( ( $node['type'] ?? '' ) === 'trigger' || ( $data['kind'] ?? '' ) === 'trigger' ) {
+        unset( $data['label'], $data['event'] );
+      }
+      $nodes[] = [
+        'id'       => $node['id'] ?? '',
+        'type'     => $node['type'] ?? '',
+        'position' => $node['position'] ?? null,
+        'data'     => $data,
+      ];
+    }
+    $edges = [];
+    foreach ( (array) ( $definition['edges'] ?? [] ) as $edge ) {
+      $edges[] = [
+        'source'       => $edge['source'] ?? '',
+        'target'       => $edge['target'] ?? '',
+        'sourceHandle' => $edge['sourceHandle'] ?? null,
+      ];
+    }
+    return wp_json_encode( [ 'nodes' => $nodes, 'edges' => $edges ] );
+  }
+
+  /**
    * Fetch a flow. By default returns the DRAFT definition (what the editor
    * is working on); pass $variant='published' to get the published runtime
    * definition. `has_unpublished_changes` is always returned so the UI can
@@ -122,7 +155,7 @@ class Meow_MWFLOW_Core {
       'trigger_type'             => $row->trigger_type,
       'trigger_config'           => json_decode( $row->trigger_config_json, true ) ?: [],
       'is_active'                => (int) $row->is_active === 1,
-      'has_unpublished_changes'  => wp_json_encode( $draft ) !== wp_json_encode( $published ),
+      'has_unpublished_changes'  => $this->normalise_definition( $draft ) !== $this->normalise_definition( $published ),
       'trigger_sample'           => $sample_json ? json_decode( $sample_json, true ) : null,
       'capture_sample'           => $capture === 1,
       'published_at'             => $published_at,

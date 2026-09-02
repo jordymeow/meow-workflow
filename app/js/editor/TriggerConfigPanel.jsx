@@ -28,20 +28,23 @@ const CopyRow = styled.div`
   align-items: stretch;
 `;
 
-const CodeInput = styled.input`
+// Plain text, not an <input>: WP admin restyles inputs (readonly ones get a
+// grey background) and that once made the URL invisible. A wrapping code box
+// shows the whole URL and can't be overridden by form styles.
+const CodeBox = styled.code`
   flex: 1;
+  display: block;
   padding: 8px 10px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11.5px;
-  /* WP admin styles input[readonly] with a light grey background, which beats a
-     single class on specificity and left the URL light-on-light (invisible). */
-  &, &[readonly] {
-    background: #0f172a;
-    color: #e2e8f0;
-  }
-  &:focus { outline: none; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); }
+  font-size: 12px;
+  line-height: 1.5;
+  background: #f8fafc;
+  color: #0f172a;
+  word-break: break-all;
+  user-select: all;
+  cursor: text;
 `;
 
 const HintList = styled.ul`
@@ -174,7 +177,7 @@ function CopyableCode({ value, label }) {
   };
   return (
     <CopyRow>
-      <CodeInput value={value} readOnly aria-label={label} onClick={(e) => e.target.select()} />
+      <CodeBox aria-label={label}>{value}</CodeBox>
       <NekoButton className="secondary" rounded icon={copied ? 'check' : 'copy'} onClick={copy} title={copied ? 'Copied' : 'Copy'} />
     </CopyRow>
   );

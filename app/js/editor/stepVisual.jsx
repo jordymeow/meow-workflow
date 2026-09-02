@@ -142,11 +142,38 @@ export function previewRunValue(stepsByNode, id, path) {
       else return undefined;
     }
   }
+  return previewValue(v);
+}
+
+export function previewValue(v) {
   if (v === undefined || v === null) return undefined;
   let s = typeof v === 'object' ? JSON.stringify(v) : String(v);
   s = s.replace(/\s+/g, ' ').trim();
   if (s === '') return undefined;
   return s.length > 64 ? s.slice(0, 61) + '…' : s;
+}
+
+/**
+ * Flatten a JSON output (e.g. an HTTP response) into its leaf paths so the
+ * editor can offer {{ gemini.json.candidates.0.content.parts.0.text }} as a
+ * click-to-copy reference instead of leaving people to guess the syntax.
+ * Leaves only, capped in depth, width and count so a big payload can't flood
+ * the menu. Returns [] for scalars.
+ */
+export function nestedRefs(prefixToken, prefixName, raw, { maxDepth = 6, maxKeys = 20, maxItems = 80 } = {}) {
+  const out = [];
+  const walk = (v, path, depth) => {
+    if (out.length >= maxItems) return;
+    const isObj = v !== null && typeof v === 'object';
+    if (!isObj || depth >= maxDepth) {
+      if (path) out.push({ token: `{{ ${prefixToken}.${path} }}`, name: `${prefixName}.${path}`, value: previewValue(v) });
+      return;
+    }
+    const keys = Array.isArray(v) ? v.map((_, i) => String(i)) : Object.keys(v);
+    for (const k of keys.slice(0, maxKeys)) walk(v[k], path ? `${path}.${k}` : k, depth + 1);
+  };
+  walk(raw, '', 0);
+  return out;
 }
 
 // Short acronyms that must stay upper-cased when we Title-Case a label.
