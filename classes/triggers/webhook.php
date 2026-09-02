@@ -23,14 +23,17 @@ class Meow_MWFLOW_Triggers_Webhook {
     foreach ( $flows as $flow ) {
       if ( $flow['trigger_type'] !== 'webhook' ) { continue; }
       if ( empty( $flow['trigger_config']['token'] ) ) {
+        global $wpdb;
         $flow['trigger_config']['token'] = wp_generate_password( 24, false );
-        $this->core->save_flow( [
-          'name'           => $flow['name'],
-          'definition'     => $flow['definition'],
-          'is_active'      => true,
-          'trigger_type'   => 'webhook',
-          'trigger_config' => $flow['trigger_config'],
-        ], $flow['id'] );
+        // Write only the config column. Going through save_flow() here used to
+        // overwrite the draft with the published definition (get_active_flows
+        // reads the published one), silently dropping the user's latest edits
+        // the moment they activated a webhook flow.
+        $wpdb->update(
+          "{$wpdb->prefix}mwflow_flows",
+          [ 'trigger_config_json' => wp_json_encode( $flow['trigger_config'] ) ],
+          [ 'id' => $flow['id'] ]
+        );
       }
     }
   }

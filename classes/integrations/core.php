@@ -42,7 +42,7 @@ class Meow_MWFLOW_Integrations_Core {
           'id'      => 'webhook',
           'name'    => __( 'Webhook (HTTP)', 'meow-workflow' ),
           'hook'    => '__mwflow_webhook__',
-          'outputs' => [ Meow_MWFLOW_SDK::output( 'body', __( 'Request body', 'meow-workflow' ), 'json' ) ],
+          'outputs' => [ Meow_MWFLOW_SDK::output( 'body', __( 'Whole request body (each field is also available as trigger.field)', 'meow-workflow' ), 'json' ) ],
         ] ),
         Meow_MWFLOW_SDK::trigger( [
           'id'      => 'wp_hook',

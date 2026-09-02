@@ -878,6 +878,7 @@ export default function Editor({ flowId, onBack }) {
                 integrations={integrations.data || []}
                 definition={definition}
                 lastRun={lastRun}
+                triggerSample={flow.data?.trigger_sample}
                 onClose={() => setSelectedNodeId(null)}
                 onDelete={deleteSelected}
                 onChange={(partial) => updateNode(selectedNode.id, partial)}

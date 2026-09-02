@@ -337,7 +337,7 @@ function policySummary(policy) {
 // site/date globals, the trigger's outputs, then every *other* step's outputs.
 // When a test run exists, each item carries the REAL value it produced —
 // seeing your own data next to the token is what makes references click.
-function buildTokens(node, definition, integrations, stepsByNode) {
+function buildTokens(node, definition, integrations, stepsByNode, triggerSample) {
   const groups = [{
     label: 'Site & date',
     items: [
@@ -369,6 +369,14 @@ function buildTokens(node, definition, integrations, stepsByNode) {
       const coreId = ttype === 'hook' ? 'wp_hook' : ttype;
       outs = core?.triggers?.find((t) => t.id === coreId)?.outputs || [];
     }
+    // A webhook payload has whatever fields the caller sent, so once a sample
+    // has been captured, list its real fields ({{ trigger.url }}) instead of
+    // the generic "body" entry. Values come from the sample when there's no run.
+    const sampleFields = ttype === 'webhook' && triggerSample && typeof triggerSample === 'object' && !Array.isArray(triggerSample)
+      ? Object.keys(triggerSample).map((k) => ({ id: k, name: k }))
+      : [];
+    if (sampleFields.length) outs = sampleFields;
+    const sampleByNode = sampleFields.length ? { trigger: { output: triggerSample } } : null;
     if (outs.length) {
       groups.push({
         label: 'Trigger',
@@ -377,6 +385,7 @@ function buildTokens(node, definition, integrations, stepsByNode) {
           name: o.name,
           value: previewRunValue(stepsByNode, triggerNode.id, o.id)
             ?? previewRunValue(stepsByNode, 'trigger', o.id)
+            ?? previewRunValue(sampleByNode, 'trigger', o.id)
         }))
       });
     }
@@ -399,7 +408,7 @@ function buildTokens(node, definition, integrations, stepsByNode) {
   return groups;
 }
 
-export default function Inspector({ node, integrations, definition, lastRun, onChange, onClose, onDelete, onSelectNode, onRenameId }) {
+export default function Inspector({ node, integrations, definition, lastRun, triggerSample, onChange, onClose, onDelete, onSelectNode, onRenameId }) {
   // node_id → step (with output) from the last test run, for value previews.
   const stepsByNode = useMemo(() => {
     const out = {};
@@ -407,8 +416,8 @@ export default function Inspector({ node, integrations, definition, lastRun, onC
     return out;
   }, [lastRun]);
   const tokens = useMemo(
-    () => buildTokens(node, definition, integrations, stepsByNode),
-    [node, definition, integrations, stepsByNode]
+    () => buildTokens(node, definition, integrations, stepsByNode, triggerSample),
+    [node, definition, integrations, stepsByNode, triggerSample]
   );
   // Context the fields use to render {{ reference }} chips below their inputs.
   const refContext = useMemo(

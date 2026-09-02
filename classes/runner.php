@@ -184,7 +184,7 @@ class Meow_MWFLOW_Runner {
       return [ 'run_id' => $run_id, 'status' => 'failed', 'error' => $error, 'steps' => [] ];
     }
 
-    $state = $this->init_state( $definition, $entry['id'], $payload );
+    $state = $this->init_state( $definition, $entry['id'], $this->trigger_context( $flow['trigger_type'] ?? '', $payload ) );
     // The watchdog treats these very differently: an async run is driven by
     // wp_cron and can be safely resumed, while a stepwise/sync run is driven by
     // the browser and must never resurrect itself once the user has walked away.
@@ -513,6 +513,19 @@ class Meow_MWFLOW_Runner {
   /* ------------------------------------------------------------------ */
   /* State machine internals                                            */
   /* ------------------------------------------------------------------ */
+
+  /**
+   * Webhook payload fields live at the top level ({{ trigger.url }}), like
+   * every other trigger. The editor hint in 0.1.x told people to write
+   * {{ trigger.body.url }}, so the whole payload is also exposed as `body`
+   * (unless the caller sent a field with that name) to keep those flows working.
+   */
+  private function trigger_context( $trigger_type, $payload ) {
+    if ( $trigger_type === 'webhook' && is_array( $payload ) && !empty( $payload ) && !array_key_exists( 'body', $payload ) ) {
+      $payload['body'] = $payload;
+    }
+    return $payload;
+  }
 
   private function init_state( $definition, $entry_id, $payload ) {
     $nodes_by_id = [];
@@ -937,7 +950,12 @@ class Meow_MWFLOW_Runner {
       $raw = $params[ $id ] ?? ( $field['default'] ?? null );
       $resolved = $this->resolve_value( $raw, $context );
       if ( $resolved === null && !empty( $field['required'] ) ) {
-        throw new Exception( sprintf( 'Required input "%s" is missing.', $id ) );
+        // Name the reference that came back empty: "title is missing" alone sends
+        // people guessing at paths when the step ID or the path is simply wrong.
+        $hint = ( is_string( $raw ) && strpos( $raw, '{{' ) !== false )
+          ? sprintf( ' The reference %s did not return a value. Check the step ID and the path: run the flow once, then click that step to see its actual output.', trim( $raw ) )
+          : '';
+        throw new Exception( sprintf( 'Required input "%s" is missing.%s', $id, $hint ) );
       }
       $out[ $id ] = $this->coerce( $resolved, $field['type'] ?? 'string' );
     }

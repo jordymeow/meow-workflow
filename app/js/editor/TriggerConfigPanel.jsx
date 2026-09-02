@@ -35,8 +35,12 @@ const CodeInput = styled.input`
   border-radius: 8px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 11.5px;
-  background: #0f172a;
-  color: #e2e8f0;
+  /* WP admin styles input[readonly] with a light grey background, which beats a
+     single class on specificity and left the URL light-on-light (invisible). */
+  &, &[readonly] {
+    background: #0f172a;
+    color: #e2e8f0;
+  }
   &:focus { outline: none; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); }
 `;
 
@@ -144,7 +148,7 @@ function summarise(type, config, isActive) {
   }
   if (type === 'webhook') {
     if (!isActive) return 'Activate the flow to start accepting webhook calls.';
-    return 'Any HTTP POST to the URL below fires this flow. The request body is exposed as {{ trigger.body }}.';
+    return 'Any HTTP POST to the URL below fires this flow. Each field of the JSON body is available as {{ trigger.field }}, e.g. {{ trigger.url }}.';
   }
   if (type === 'hook') {
     if (config.eventName) return `Runs ${config.eventName.toLowerCase()}.`;
@@ -191,6 +195,9 @@ export default function TriggerConfigPanel({
     onSuccess: () => qc.invalidateQueries({ queryKey: ['flow', flowId] })
   });
   const canCapture = (triggerType === 'webhook' || triggerType === 'hook' || triggerType === 'rss') && !!flowId;
+  // First field of the captured payload, shown as a ready-to-copy example.
+  const sampleKeys = triggerSample && typeof triggerSample === 'object' && !Array.isArray(triggerSample) ? Object.keys(triggerSample) : [];
+  const sampleExample = sampleKeys.length ? `{{ trigger.${sampleKeys[0]} }}` : '';
 
   // Friendly event list, sourced from every integration that registers real
   // hook triggers (WordPress, WooCommerce, third parties). Core's internal
@@ -314,7 +321,7 @@ export default function TriggerConfigPanel({
 
         {triggerType === 'webhook' && (
           webhookUrl ? (
-            <Field label="Webhook URL" hint="POST JSON here to fire the flow. Reference the body as {{ trigger.body }}. Keep it secret — it contains a unique token.">
+            <Field label="Webhook URL" hint="POST JSON here to fire the flow. Each body field is available as {{ trigger.field }}, e.g. {{ trigger.url }}. Keep it secret: it contains a unique token.">
               <CopyableCode value={webhookUrl} label="Webhook URL" />
             </Field>
           ) : (
@@ -381,9 +388,9 @@ export default function TriggerConfigPanel({
             </SampleHeader>
             <SampleHint>
               {captureSample
-                ? 'Send one real call to your trigger now. We\'ll store the payload here and Test once will use it — that call will not fire the flow.'
+                ? 'Send one real call to your trigger now. We\'ll store the payload here and Test once will use it. That call will not fire the flow.'
                 : (triggerSample
-                  ? 'The last captured payload. Test once will use it as {{ trigger.* }} so your expressions resolve against real data.'
+                  ? `The last captured payload. Each field is available as {{ trigger.field }}${sampleExample ? `, e.g. ${sampleExample}` : ''}, and Test once runs against it.`
                   : 'Capture one real call to your trigger so Test once can replay it against your flow.')}
             </SampleHint>
             {triggerSample && !captureSample && (

@@ -5,7 +5,7 @@ Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.1.2
+Stable tag: 0.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,12 @@ No. AI steps use your own installed AI Engine (and your own API keys). The HTTP 
 4. Schedule a workflow — this weekly content brief runs every Monday, gathers recent posts, and writes a summary with AI Engine.
 
 == Changelog ==
+
+= 0.1.3 (2026/09/02) =
+* Fix: Webhook URL now displays in the editor.
+* Fix: Webhook payload fields are accessible as both `trigger.field` and `trigger.body.field`.
+* Fix: Missing-input errors now name the reference that came back empty.
+* Fix: Webhook token generation no longer overwrites unsaved flow changes.
 
 = 0.1.2 (2026/08/31) =
 * Fix: Scheduled workflows no longer stall before the final node.
