@@ -9,7 +9,7 @@ import ModulePickerModal from './ModulePickerModal';
 import Inspector from './Inspector';
 import TriggerConfigPanel from './TriggerConfigPanel';
 import { nodeDisplayName, deriveTriggerLabel } from './stepVisual';
-import { Power, PowerOff, Play } from 'lucide-react';
+import { Power, PowerOff, Play, AlertTriangle, Undo2, Redo2 } from 'lucide-react';
 import { api } from '../helpers/api';
 
 const FAVORITES_KEY = 'mwflow.favorites';
@@ -140,6 +140,80 @@ const SaveChip = styled.span`
     p.$state === 'error' ? '#b91c1c' :
     p.$state === 'unpublished' ? '#92400e' :
     '#15803d'};
+`;
+
+// "N to fix": the server validates the draft on every save (see
+// Core::validate_definition) and Publish refuses while errors remain.
+const IssuesChip = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 999px;
+  white-space: nowrap;
+  cursor: pointer;
+  background: ${(p) => (p.$errors ? '#fee2e2' : '#fef3c7')};
+  color: ${(p) => (p.$errors ? '#b91c1c' : '#92400e')};
+`;
+
+const HistoryBtn = styled.button`
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  &:hover:not(:disabled) { background: #f1f5f9; color: #0f172a; }
+  &:disabled { opacity: 0.3; cursor: default; }
+`;
+
+const IssuesPanel = styled.div`
+  position: absolute;
+  top: 58px;
+  right: 24px;
+  z-index: 30;
+  width: 380px;
+  max-height: 60vh;
+  overflow: auto;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+  padding: 6px 0;
+`;
+
+const IssueRow = styled.button`
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #0f172a;
+  cursor: pointer;
+  &:hover { background: #f8fafc; }
+`;
+
+const IssueLevel = styled.span`
+  flex-shrink: 0;
+  margin-top: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: ${(p) => (p.$level === 'error' ? '#dc2626' : '#d97706')};
 `;
 
 const SaveDot = styled.span`
@@ -295,6 +369,8 @@ export default function Editor({ flowId, onBack }) {
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [saveState, setSaveState] = useState('saved'); // saved | dirty | saving | error
   const [hasUnpublished, setHasUnpublished] = useState(false);
+  const [issues, setIssues] = useState([]);
+  const [issuesOpen, setIssuesOpen] = useState(false);
   const [lastRun, setLastRun] = useState(null);
   const [toast, setToast] = useState(null); // { ok: boolean, message: string }
   const toastTimerRef = useRef(null);
@@ -309,6 +385,15 @@ export default function Editor({ flowId, onBack }) {
   useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
   const savedSnapshotRef = useRef(null); // JSON of last persisted state
   const saveTimerRef = useRef(null);
+  // Set by the inline "+" (node id and, for conditions, the branch handle) and
+  // consumed by the next addNodeFromSpec.
+  const addAnchorRef = useRef(null);
+
+  // Undo / redo over `definition`. Rapid successive changes (a drag emits
+  // dozens) are coalesced so one Cmd+Z undoes one gesture. Reset on hydrate.
+  const historyRef = useRef({ past: [], future: [], last: 0, skip: false, ignoreUntil: 0 });
+  const prevDefinitionRef = useRef(null);
+  const [historyVersion, setHistoryVersion] = useState(0);
 
   useEffect(() => {
     document.body.classList.add('mwflow-editor-open');
@@ -341,6 +426,10 @@ export default function Editor({ flowId, onBack }) {
     if (!flow.data) return;
     if (hydratedFlowIdRef.current !== flow.data.id) {
       hydratedFlowIdRef.current = flow.data.id;
+      // Hydration and the trigger-label derivation that follows it are not
+      // user edits: ignore definition changes for a moment after loading.
+      historyRef.current = { past: [], future: [], last: 0, skip: false, ignoreUntil: Date.now() + 1000 };
+      setHistoryVersion((v) => v + 1);
       const next = {
         name: flow.data.name,
         definition: flow.data.definition || { nodes: [], edges: [] },
@@ -354,6 +443,7 @@ export default function Editor({ flowId, onBack }) {
       setTriggerConfig(next.triggerConfig);
       setIsActive(next.isActive);
       setHasUnpublished(!!flow.data.has_unpublished_changes);
+      setIssues(flow.data.issues || []);
       savedSnapshotRef.current = snapshot(next);
       setSaveState('saved');
       return;
@@ -364,6 +454,42 @@ export default function Editor({ flowId, onBack }) {
       setTriggerConfig((c) => (c.token === token ? c : { ...c, token }));
     }
   }, [flow.data]);
+
+  useEffect(() => {
+    const h = historyRef.current;
+    const prev = prevDefinitionRef.current;
+    prevDefinitionRef.current = definition;
+    if (!prev || prev === definition) return;
+    if (h.skip) { h.skip = false; return; }
+    const now = Date.now();
+    if (h.ignoreUntil && now < h.ignoreUntil) return;
+    if (h.past.length && now - h.last < 400) { h.last = now; return; }
+    h.past.push(prev);
+    if (h.past.length > 50) h.past.shift();
+    h.future = [];
+    h.last = now;
+    setHistoryVersion((v) => v + 1);
+  }, [definition]);
+
+  const undo = useCallback(() => {
+    const h = historyRef.current;
+    if (!h.past.length) return;
+    const prev = h.past.pop();
+    h.skip = true;
+    h.last = 0;
+    setDefinition((current) => { h.future.push(current); return prev; });
+    setHistoryVersion((v) => v + 1);
+  }, []);
+
+  const redo = useCallback(() => {
+    const h = historyRef.current;
+    if (!h.future.length) return;
+    const next = h.future.pop();
+    h.skip = true;
+    h.last = 0;
+    setDefinition((current) => { h.past.push(current); return next; });
+    setHistoryVersion((v) => v + 1);
+  }, []);
 
   // Keep the canvas trigger node a pure reflection of the flow's trigger
   // type + config. Without this, changing the trigger type in the panel left
@@ -433,7 +559,13 @@ export default function Editor({ flowId, onBack }) {
       qc.invalidateQueries({ queryKey: ['flow', flowId] });
       showToast(true, 'Workflow published — live triggers now use this version.');
     },
-    onError: (err) => showToast(false, err.message || 'Publish failed.')
+    onError: (err) => {
+      if (err.kind === 'validation') {
+        if (Array.isArray(err.data?.issues)) setIssues(err.data.issues);
+        setIssuesOpen(true);
+      }
+      showToast(false, err.message || 'Publish failed.');
+    }
   });
 
   // Debounced auto-save: only fire when the JSON snapshot differs from what
@@ -583,19 +715,43 @@ export default function Editor({ flowId, onBack }) {
       }
     };
 
+    // The inline "+" may have named a branch (condition TRUE / FALSE).
+    const pending = addAnchorRef.current;
+    addAnchorRef.current = null;
+    const handle = pending && anchorNode && pending.nodeId === anchorNode.id ? pending.handle : null;
+    const branching = !!anchorNode
+      && (anchorNode.data.action === 'condition' || anchorNode.data.action === 'router');
+
     setDefinition((d) => {
-      const newEdges = [...d.edges];
-      // Auto-wire from the anchor — but not from branching nodes (condition /
-      // router), whose edges need a branch handle the user picks by dragging.
-      if (!position && anchorNode && !isTrigger
-        && anchorNode.data.action !== 'condition' && anchorNode.data.action !== 'router') {
-        newEdges.push({
+      let nodes = [...d.nodes];
+      let edges = [...d.edges];
+      // Auto-wire from the anchor. Branching nodes only when the "+" of a
+      // specific branch was used; otherwise the user picks the branch by dragging.
+      if (!position && anchorNode && !isTrigger && (!branching || handle)) {
+        // Insert, don't fork: whatever followed the anchor on this branch now
+        // follows the new step, and the rows below move down to make room.
+        // A new condition carries the old continuation on its TRUE branch; a
+        // new router has no default branch, so it forks instead of splicing.
+        const sameHandle = (e) => (e.sourceHandle || '') === (handle || '');
+        const newHandle = spec.id === 'condition' ? 'true' : undefined;
+        const moved = spec.id === 'router'
+          ? []
+          : edges.filter((e) => e.source === anchorNode.id && sameHandle(e));
+        if (moved.length) {
+          edges = edges.map((e) => (moved.includes(e) ? { ...e, source: id, sourceHandle: newHandle } : e));
+          const anchorY = anchorNode.position?.y || 0;
+          nodes = nodes.map((n) => ((n.position?.y || 0) > anchorY
+            ? { ...n, position: { ...n.position, y: n.position.y + 150 } }
+            : n));
+        }
+        edges.push({
           id: `e_${Date.now()}_${Math.floor(Math.random() * 999)}`,
           source: anchorNode.id,
-          target: id
+          target: id,
+          ...(handle ? { sourceHandle: handle } : {})
         });
       }
-      return { nodes: [...d.nodes, node], edges: newEdges };
+      return { nodes: [...nodes, node], edges };
     });
     setSelectedNodeId(id);
     lastAddedRef.current = id;
@@ -603,7 +759,8 @@ export default function Editor({ flowId, onBack }) {
 
   // Inline "+" on a node → select it as the anchor and open the picker so the
   // next chosen step is added (and auto-wired) right after it.
-  const addAfter = useCallback((nodeId) => {
+  const addAfter = useCallback((nodeId, handle = null) => {
+    addAnchorRef.current = { nodeId, handle };
     setSelectedNodeId(nodeId);
     setPickerOpen(true);
   }, []);
@@ -673,6 +830,11 @@ export default function Editor({ flowId, onBack }) {
         if (!testRun.isPending) testRun.mutate();
         return;
       }
+      if (cmd && !isTypingTarget(e.target) && (e.key === 'z' || e.key === 'Z' || e.key === 'y')) {
+        e.preventDefault();
+        if (e.key === 'y' || e.shiftKey) redo(); else undo();
+        return;
+      }
       if (e.key === 'Escape') {
         if (!isTypingTarget(e.target)) setSelectedNodeId(null);
         return;
@@ -689,7 +851,7 @@ export default function Editor({ flowId, onBack }) {
 
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [performSave, deleteSelected, selectedNodeId, testRun]);
+  }, [performSave, deleteSelected, selectedNodeId, testRun, undo, redo]);
 
   /**
    * Apply a step proposed by AI Assist → Suggest. Inserts a new action node
@@ -775,6 +937,10 @@ export default function Editor({ flowId, onBack }) {
 
   const isTriggerSelected = selectedNode?.type === 'trigger';
   const inspectorOpen = !!selectedNode;
+  const issueErrors = issues.filter((i) => i.level === 'error').length;
+  // historyVersion only exists to re-render these two when the stacks change.
+  const canUndo = historyVersion >= 0 && historyRef.current.past.length > 0;
+  const canRedo = historyVersion >= 0 && historyRef.current.future.length > 0;
 
   return (
     <Shell $inspectorOpen={inspectorOpen} style={{ position: 'relative' }}>
@@ -792,6 +958,23 @@ export default function Editor({ flowId, onBack }) {
           )}
           <ToastClose>×</ToastClose>
         </Toast>
+      )}
+      {issuesOpen && issues.length > 0 && (
+        <IssuesPanel>
+          {issues.map((issue, i) => (
+            <IssueRow
+              key={i}
+              type="button"
+              onClick={() => {
+                if (issue.node_id) setSelectedNodeId(issue.node_id);
+                setIssuesOpen(false);
+              }}
+            >
+              <IssueLevel $level={issue.level} />
+              <span>{issue.message}</span>
+            </IssueRow>
+          ))}
+        </IssuesPanel>
       )}
       <TopBar>
         <TitleInput
@@ -836,6 +1019,27 @@ export default function Editor({ flowId, onBack }) {
             {isActive ? <Power size={14} /> : <PowerOff size={14} />}
             {isActive ? 'Active' : 'Paused'}
           </ActiveToggle>
+
+          <HistoryBtn type="button" onClick={undo} disabled={!canUndo} title="Undo (Cmd/Ctrl+Z)">
+            <Undo2 size={15} />
+          </HistoryBtn>
+          <HistoryBtn type="button" onClick={redo} disabled={!canRedo} title="Redo (Cmd/Ctrl+Shift+Z)">
+            <Redo2 size={15} />
+          </HistoryBtn>
+
+          {issues.length > 0 && (
+            <IssuesChip
+              type="button"
+              $errors={issueErrors > 0}
+              onClick={() => setIssuesOpen((o) => !o)}
+              title={issueErrors > 0 ? 'Problems that stop this workflow from running. Click to see them.' : 'Things worth a look. Click to see them.'}
+            >
+              <AlertTriangle size={12} />
+              {issueErrors > 0
+                ? `${issueErrors} to fix`
+                : `${issues.length} warning${issues.length === 1 ? '' : 's'}`}
+            </IssuesChip>
+          )}
 
           <SaveChip
             $state={saveChip.state}
@@ -921,7 +1125,7 @@ export default function Editor({ flowId, onBack }) {
 
       <ModulePickerModal
         isOpen={pickerOpen}
-        onClose={() => setPickerOpen(false)}
+        onClose={() => { setPickerOpen(false); addAnchorRef.current = null; }}
         integrations={integrations.data || []}
         favorites={favorites}
         onToggleFavorite={toggleFavorite}

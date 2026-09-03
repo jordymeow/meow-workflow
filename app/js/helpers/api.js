@@ -1,5 +1,5 @@
-// Previous: none
-// Current: 0.1.1
+// Previous: 0.1.1
+// Current: 0.1.5
 
 const settings = window.mwflow || {};
 
@@ -14,14 +14,17 @@ async function request(path, options = {}) {
   if (!response.ok) {
     let message = `Request failed (${response.status})`;
     let kind = 'http_error';
+    let data = null;
     try {
       const body = await response.json();
       if (body?.message) message = body.message;
       // WP_Error data field — our REST endpoints stash error_kind there.
       if (body?.data?.error_kind) kind = body.data.error_kind;
+      if (body?.data) data = body.data;
     } catch (_) { /* ignore */ }
     const err = new Error(message);
     err.kind = kind;
+    err.data = data;
     err.status = response.status;
     throw err;
   }
@@ -67,6 +70,8 @@ export const api = {
   installTemplate: (id) => request(`/templates/${encodeURIComponent(id)}/install`, { method: 'POST' }),
 
   // Maintenance
+  settings: () => request('/settings'),
+  updateSettings: (data) => request('/settings', { method: 'POST', body: JSON.stringify(data) }),
   exportSettings: () => request('/maintenance/export'),
   importSettings: (data) => request('/maintenance/import', {
     method: 'POST',

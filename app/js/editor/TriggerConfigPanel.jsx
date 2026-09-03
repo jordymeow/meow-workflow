@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { NekoSelect, NekoOption, NekoInput, NekoMessage, NekoButton } from '@neko-ui';
+import { NekoSelect, NekoOption, NekoInput, NekoMessage, NekoButton, NekoCheckbox } from '@neko-ui';
 import { Zap, Clock, Webhook, Anchor, Radio, Rss } from 'lucide-react';
 import { api } from '../helpers/api';
 import { PanelHead, PanelBody, Field, Callout, RefBlock, RefBlockLabel, RefRow, RefCode } from './panelKit';
@@ -45,6 +45,10 @@ const CodeBox = styled.code`
   word-break: break-all;
   user-select: all;
   cursor: text;
+`;
+
+const AllowGetRow = styled.div`
+  margin-top: 10px;
 `;
 
 const HintList = styled.ul`
@@ -324,8 +328,17 @@ export default function TriggerConfigPanel({
 
         {triggerType === 'webhook' && (
           webhookUrl ? (
-            <Field label="Webhook URL" hint="POST JSON here to fire the flow. Each body field is available as {{ trigger.field }}, e.g. {{ trigger.url }}. Keep it secret: it contains a unique token.">
+            <Field label="Webhook URL" hint="POST JSON or form fields here to fire the flow. Each field is available as {{ trigger.field }}, e.g. {{ trigger.url }}. Keep it secret: it contains a unique token.">
               <CopyableCode value={webhookUrl} label="Webhook URL" />
+              <AllowGetRow>
+                <NekoCheckbox
+                  small
+                  label="Also accept GET requests"
+                  description="Off by default, so a link preview or a crawler visiting the URL cannot start the workflow. Turn it on for services that can only call a URL."
+                  checked={!!triggerConfig.allow_get}
+                  onChange={(v) => setConfig('allow_get', !!v)}
+                />
+              </AllowGetRow>
             </Field>
           ) : (
             <NekoMessage variant="info">

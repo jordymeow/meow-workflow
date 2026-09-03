@@ -139,11 +139,33 @@ class Meow_MWFLOW_Rest {
       'callback'            => [ $this, 'import_settings' ],
     ] );
 
+    register_rest_route( $this->namespace, '/settings', [
+      [
+        'methods'             => 'GET',
+        'permission_callback' => $auth,
+        'callback'            => [ $this, 'get_settings' ],
+      ],
+      [
+        'methods'             => 'POST',
+        'permission_callback' => $auth,
+        'callback'            => [ $this, 'update_settings' ],
+      ],
+    ] );
+
     register_rest_route( $this->namespace, '/maintenance/reset', [
       'methods'             => 'POST',
       'permission_callback' => $auth,
       'callback'            => [ $this, 'reset_settings' ],
     ] );
+  }
+
+  public function get_settings() {
+    return rest_ensure_response( $this->core->get_settings() );
+  }
+
+  public function update_settings( $req ) {
+    $body = $req->get_json_params() ?: [];
+    return rest_ensure_response( $this->core->update_settings( $body ) );
   }
 
   public function get_integrations() {
@@ -159,19 +181,27 @@ class Meow_MWFLOW_Rest {
     if ( !$flow ) {
       return new WP_Error( 'mwflow_not_found', __( 'Flow not found.', 'meow-workflow' ), [ 'status' => 404 ] );
     }
-    return rest_ensure_response( $flow );
+    return rest_ensure_response( $this->with_issues( $flow ) );
+  }
+
+  /** Attach the draft's validation issues so the editor can show what to fix. */
+  private function with_issues( $flow ) {
+    if ( $flow ) {
+      $flow['issues'] = $this->core->validate_definition( $flow['definition'], $flow['trigger_type'], $flow['trigger_config'] );
+    }
+    return $flow;
   }
 
   public function create_flow( $req ) {
     $data = $req->get_json_params() ?: [];
     $id = $this->core->save_flow( $data );
-    return rest_ensure_response( $this->core->get_flow( $id ) );
+    return rest_ensure_response( $this->with_issues( $this->core->get_flow( $id ) ) );
   }
 
   public function update_flow( $req ) {
     $data = $req->get_json_params() ?: [];
     $id = $this->core->save_flow( $data, (int) $req['id'] );
-    return rest_ensure_response( $this->core->get_flow( $id ) );
+    return rest_ensure_response( $this->with_issues( $this->core->get_flow( $id ) ) );
   }
 
   public function delete_flow( $req ) {
@@ -181,10 +211,27 @@ class Meow_MWFLOW_Rest {
 
   public function publish_flow( $req ) {
     $id = (int) $req['id'];
+    $draft = $this->core->get_flow( $id );
+    if ( !$draft ) {
+      return new WP_Error( 'mwflow_not_found', __( 'Flow not found.', 'meow-workflow' ), [ 'status' => 404 ] );
+    }
+    // Publishing a flow that cannot run only moves the failure to a live run
+    // nobody is watching. Errors block; warnings (unconnected steps) don't.
+    $errors = array_values( array_filter(
+      $this->core->validate_definition( $draft['definition'], $draft['trigger_type'], $draft['trigger_config'] ),
+      function ( $issue ) { return $issue['level'] === 'error'; }
+    ) );
+    if ( $errors ) {
+      return new WP_Error( 'mwflow_invalid_flow', sprintf(
+        /* translators: %d is the number of problems */
+        _n( 'Fix %d problem before publishing.', 'Fix %d problems before publishing.', count( $errors ), 'meow-workflow' ),
+        count( $errors )
+      ), [ 'status' => 400, 'error_kind' => 'validation', 'issues' => $errors ] );
+    }
     if ( !$this->core->publish_flow( $id ) ) {
       return new WP_Error( 'mwflow_publish_failed', __( 'Could not publish — flow not found.', 'meow-workflow' ), [ 'status' => 404 ] );
     }
-    return rest_ensure_response( $this->core->get_flow( $id ) );
+    return rest_ensure_response( $this->with_issues( $this->core->get_flow( $id ) ) );
   }
 
   public function toggle_capture_sample( $req ) {
@@ -257,6 +304,15 @@ class Meow_MWFLOW_Rest {
         // Rate-limit per flow so an exposed webhook URL can't be hammered into a
         // run flood or an SSRF/email amplifier. Fixed window of 1 minute;
         // filterable (return 0 to disable) for genuinely high-volume endpoints.
+        // GET is off unless the flow opts in: a link preview, a crawler or a
+        // browser prefetch must not be able to fire a workflow by visiting a URL.
+        if ( $req->get_method() === 'GET' && empty( $flow['trigger_config']['allow_get'] ) ) {
+          return new WP_Error(
+            'mwflow_method_not_allowed',
+            __( 'This webhook accepts POST only. Enable "Allow GET" on the trigger to change that.', 'meow-workflow' ),
+            [ 'status' => 405 ]
+          );
+        }
         $limit = (int) apply_filters( 'mwflow_webhook_rate_limit', 60, $flow['id'] );
         if ( $limit > 0 ) {
           $rl_key = 'mwflow_hook_rl_' . (int) $flow['id'];
@@ -270,8 +326,13 @@ class Meow_MWFLOW_Rest {
           }
           set_transient( $rl_key, $count + 1, MINUTE_IN_SECONDS );
         }
+        // Query string, then form fields (application/x-www-form-urlencoded and
+        // multipart: HTML forms, Stripe, Twilio, most "send a webhook" buttons),
+        // then JSON. Without the form fields those callers arrived as an empty
+        // payload with no error at all.
         $payload = array_merge(
           (array) $req->get_query_params(),
+          (array) ( $req->get_body_params() ?: [] ),
           (array) ( $req->get_json_params() ?: [] )
         );
         // Sample-capture mode: store the payload and skip execution this once.

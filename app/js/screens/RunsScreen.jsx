@@ -160,7 +160,7 @@ const TRIGGER_META = {
 const statusToNeko = (s) => {
   if (s === 'done') return 'success';
   if (s === 'failed' || s === 'error') return 'error';
-  if (s === 'running') return 'pending';
+  if (s === 'running' || s === 'waiting') return 'pending';
   if (s === 'pending' || s === 'queued') return 'idle';
   return 'idle';
 };
@@ -271,7 +271,11 @@ export default function RunsScreen() {
                     )}
                   </Cell>
                   <Cell>
-                    <NekoStatus status={statusToNeko(r.status)} dot>{r.status}</NekoStatus>
+                    <NekoStatus status={statusToNeko(r.status)} dot>
+                      {r.status === 'waiting' && r.resume_at
+                        ? `waiting until ${new Date(r.resume_at.replace(' ', 'T')).toLocaleString()}`
+                        : r.status}
+                    </NekoStatus>
                   </Cell>
                 </RunRow>
                 {isOpen && (

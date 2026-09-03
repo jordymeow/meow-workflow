@@ -247,6 +247,26 @@ export default function ActionNode({ id, data, selected }) {
       ) : (
         <Handle type="source" position={Position.Bottom} />
       )}
+      {isCondition && data._onAddAfter && (
+        <>
+          <AddAfterBtn
+            className="mwflow-add-after"
+            style={{ left: '30%', bottom: -46 }}
+            onClick={(e) => { e.stopPropagation(); data._onAddAfter(id, 'true'); }}
+            title="Add a step on the TRUE branch"
+          >
+            <Plus size={14} />
+          </AddAfterBtn>
+          <AddAfterBtn
+            className="mwflow-add-after"
+            style={{ left: '70%', bottom: -46 }}
+            onClick={(e) => { e.stopPropagation(); data._onAddAfter(id, 'false'); }}
+            title="Add a step on the FALSE branch"
+          >
+            <Plus size={14} />
+          </AddAfterBtn>
+        </>
+      )}
       {!isCondition && data._onAddAfter && (
         <AddAfterBtn
           className="mwflow-add-after"

@@ -1,11 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { NekoBlock, NekoMessage, NekoSpacer, NekoButton, NekoModal, NekoWrapper, NekoColumn } from '@neko-ui';
+import { NekoBlock, NekoMessage, NekoSpacer, NekoButton, NekoModal, NekoWrapper, NekoColumn, NekoCheckbox, NekoInput } from '@neko-ui';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { api } from '../helpers/api';
 import { resetSetupAssistant } from '../components/SetupAssistant';
 import { StepIcon, StepGlyph } from '../editor/stepVisual';
+
+const NotifyEmailRow = styled.div`
+  margin-top: 14px;
+  max-width: 420px;
+`;
+
+const NotifyHint = styled.div`
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 6px;
+`;
 
 // A representative icon per integration, drawn from the same vocabulary the
 // canvas steps use so Settings and the editor read as one product. Unknown
@@ -413,6 +424,14 @@ function IntegrationModal({ it, onClose }) {
 export default function SettingsScreen() {
   const qc = useQueryClient();
   const integrationsQuery = useQuery({ queryKey: ['integrations'], queryFn: api.integrations });
+  const settingsQuery = useQuery({ queryKey: ['settings'], queryFn: api.settings });
+  const saveSettings = useMutation({
+    mutationFn: (data) => api.updateSettings(data),
+    onSuccess: (data) => qc.setQueryData(['settings'], data)
+  });
+  const settings = settingsQuery.data || { notify_failures: true, notify_email: '' };
+  // null while untouched; the field saves on blur so typing doesn't spam saves.
+  const [notifyEmail, setNotifyEmail] = useState(null);
   const integrations = integrationsQuery.data || [];
 
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
@@ -637,6 +656,29 @@ export default function SettingsScreen() {
                 </div>
               </>
             )}
+          </NekoBlock>
+
+          <NekoBlock className="primary" title="Notifications">
+            <NekoCheckbox
+              label="Email me when a live workflow fails"
+              description="At most one email per workflow per hour, with the failed step, the error and a link to the run. Test runs never send one."
+              checked={!!settings.notify_failures}
+              disabled={settingsQuery.isLoading}
+              onChange={(v) => saveSettings.mutate({ notify_failures: !!v })}
+            />
+            <NotifyEmailRow>
+              <NekoInput
+                value={notifyEmail ?? settings.notify_email ?? ''}
+                placeholder="Site admin email"
+                onChange={(v) => setNotifyEmail(v)}
+                onBlur={() => {
+                  if (notifyEmail === null) return;
+                  saveSettings.mutate({ notify_email: notifyEmail });
+                  setNotifyEmail(null);
+                }}
+              />
+              <NotifyHint>Where to send them. Leave empty to use the site admin email.</NotifyHint>
+            </NotifyEmailRow>
           </NekoBlock>
 
           <NekoBlock className="primary" title="Maintenance">

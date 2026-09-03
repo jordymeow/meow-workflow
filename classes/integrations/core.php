@@ -154,13 +154,20 @@ class Meow_MWFLOW_Integrations_Core {
         ] ),
         Meow_MWFLOW_SDK::action( [
           'id'          => 'delay',
-          'name'        => __( 'Delay', 'meow-workflow' ),
-          'description' => __( 'Pauses execution for N seconds (capped at 30s in the sync runner).', 'meow-workflow' ),
+          'name'        => __( 'Wait', 'meow-workflow' ),
+          'description' => __( 'Pauses the workflow. Live runs wait in the background, so minutes, hours or days are fine (up to 30 days). In Test once, waits longer than 5 seconds are skipped.', 'meow-workflow' ),
           'icon'        => 'timer',
           'inputs'      => [
-            Meow_MWFLOW_SDK::input( 'seconds', __( 'Seconds', 'meow-workflow' ), 'number', [ 'default' => 1, 'min' => 0, 'max' => 30 ] ),
+            Meow_MWFLOW_SDK::input( 'amount', __( 'Wait for', 'meow-workflow' ), 'number', [ 'default' => 1, 'min' => 0 ] ),
+            Meow_MWFLOW_SDK::input( 'unit', __( 'Unit', 'meow-workflow' ), 'select', [
+              'options' => [ 'seconds', 'minutes', 'hours', 'days' ],
+              'default' => 'seconds',
+            ] ),
           ],
-          'outputs'     => [ Meow_MWFLOW_SDK::output( 'waited', __( 'Waited', 'meow-workflow' ), 'number' ) ],
+          'outputs'     => [
+            Meow_MWFLOW_SDK::output( 'waited', __( 'Seconds waited', 'meow-workflow' ), 'number' ),
+            Meow_MWFLOW_SDK::output( 'resume_at', __( 'Resumed at', 'meow-workflow' ), 'string' ),
+          ],
           'callback'    => [ __CLASS__, 'callback_delay' ],
         ] ),
         Meow_MWFLOW_SDK::action( [
@@ -287,10 +294,11 @@ class Meow_MWFLOW_Integrations_Core {
     return [ 'value' => wp_rand( $min, $max ) ];
   }
 
+  // The runner handles Wait itself (see Runner::execute_next): a live run is
+  // parked with a resume time instead of sleeping inside the request. This
+  // callback only exists so the action registers like any other.
   public static function callback_delay( $inputs ) {
-    $seconds = max( 0, min( 30, (int) ( $inputs['seconds'] ?? 0 ) ) );
-    if ( $seconds > 0 ) { sleep( $seconds ); }
-    return [ 'waited' => $seconds ];
+    return [ 'waited' => 0, 'resume_at' => null ];
   }
 
   public static function callback_set_var( $inputs ) {

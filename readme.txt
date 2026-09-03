@@ -5,7 +5,7 @@ Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.1.4
+Stable tag: 0.1.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,14 @@ No. AI steps use your own installed AI Engine (and your own API keys). The HTTP 
 4. Schedule a workflow — this weekly content brief runs every Monday, gathers recent posts, and writes a summary with AI Engine.
 
 == Changelog ==
+
+= 0.1.5 (2026/09/03) =
+* Add: Validate a workflow before publishing, with a list of issues to fix.
+* Add: Email the admin when a live workflow fails.
+* Add: Insert new steps between existing ones, with undo and redo in the editor.
+* Update: Delay is now a Wait step that parks live runs for minutes, hours or days.
+* Update: Webhooks accept form-encoded requests and reject GET unless it's explicitly allowed.
+* Fix: A step with two parent steps no longer runs twice.
 
 = 0.1.4 (2026/09/02) =
 * Fix: The editor no longer overwrites in-progress edits after an auto-save.

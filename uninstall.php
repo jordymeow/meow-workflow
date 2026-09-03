@@ -7,6 +7,7 @@ $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}mwflow_flows" );
 $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}mwflow_runs" );
 
 delete_option( 'mwflow_options' );
+delete_option( 'mwflow_settings' );
 delete_option( 'mwflow_version' );
 
 // Per-flow RSS seen-lists (mwflow_rss_seen_<flow_id>).

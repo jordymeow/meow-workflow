@@ -88,6 +88,11 @@ class Meow_MWFLOW_Runner {
   /** Hard ceiling on For Each iterations, whatever the step's limit says. */
   const FOREACH_MAX_ITEMS = 100;
 
+  // Wait step: live runs are parked for up to 30 days; Test once only sits
+  // through short waits (see execute_next).
+  const MAX_WAIT_SECONDS = 30 * DAY_IN_SECONDS;
+  const TEST_WAIT_MAX_SECONDS = 5;
+
   private $core;
 
   /** Run currently being advanced, so execute_next() can checkpoint mid-run. */
@@ -225,7 +230,12 @@ class Meow_MWFLOW_Runner {
   public function run_step( $run_id ) {
     $run_id = (int) $run_id;
     $loaded = $this->core->load_run_state( $run_id );
-    if ( !$loaded || $loaded['status'] !== 'running' ) { return; }
+    if ( !$loaded || !in_array( $loaded['status'], [ 'running', 'waiting' ], true ) ) { return; }
+    if ( $loaded['status'] === 'waiting' ) {
+      // The Wait step's resume event: back to running, the queue already
+      // holds the steps that follow the wait.
+      $this->core->resume_run( $run_id );
+    }
 
     // Async continuations arrive via WP-Cron with no logged-in user — adopt
     // the flow author's identity here too (see run() for the rationale).
@@ -244,6 +254,15 @@ class Meow_MWFLOW_Runner {
       while ( true ) {
         if ( empty( $state['queue'] ) && !$this->maybe_continue_loops( $state ) ) { break; }
         $this->execute_next( $state );
+        // A Wait step parked the run: store it as waiting and come back at
+        // the resume time. The watchdog leaves waiting runs alone.
+        if ( !empty( $state['pause_until'] ) ) {
+          $resume_at = (int) $state['pause_until'];
+          unset( $state['pause_until'] );
+          $this->core->pause_run( $run_id, $state, $resume_at );
+          wp_schedule_single_event( $resume_at, self::STEP_HOOK, [ $run_id ] );
+          return;
+        }
         // A drained queue may just mean the current For Each iteration ended.
         if ( empty( $state['queue'] ) ) {
           $this->maybe_continue_loops( $state );
@@ -302,6 +321,17 @@ class Meow_MWFLOW_Runner {
    * step event gets pushed again, a few times, then honestly marked failed.
    */
   public function watchdog() {
+    // A waiting run whose resume event got lost would sleep forever. Anything
+    // past its resume time by a few minutes with no event pending is pushed.
+    foreach ( $this->core->get_overdue_waits( 300 ) as $row ) {
+      $run_id = (int) $row->id;
+      if ( wp_next_scheduled( self::STEP_HOOK, [ $run_id ] ) ) { continue; }
+      wp_schedule_single_event( time(), self::STEP_HOOK, [ $run_id ] );
+      $this->core->logging->info( 'Resuming a wait whose event was lost.', [
+        'flow_id' => (int) $row->flow_id, 'run_id' => $run_id,
+      ] );
+    }
+
     // Never let a filter shorten this below the constant: see STALL_SECONDS.
     $stall = max( self::STALL_SECONDS,
       (int) apply_filters( 'mwflow_stall_seconds', self::STALL_SECONDS ) );
@@ -610,6 +640,9 @@ class Meow_MWFLOW_Runner {
     $node_id = array_shift( $state['queue'] );
     $node = $state['nodes'][ $node_id ] ?? null;
     if ( !$node ) { return; }
+    // A step with two parents is queued once per finished parent. Without this
+    // check it ran twice (two emails, two posts) whenever branches joined back.
+    if ( $this->already_handled( $node_id, $state ) ) { return; }
 
     // Global runaway guard — counts every executed step across all run paths and
     // survives in the persisted state, so an async/cron loop can't outlive it.
@@ -679,6 +712,30 @@ class Meow_MWFLOW_Runner {
             $state['loops'][ $node_id ] = [ 'items' => $items, 'index' => 0 ];
             $output = [ 'item' => $items[0], 'index' => 0, 'count' => count( $items ) ];
             $branch = 'each';
+          }
+        }
+        else if ( $this->is_delay( $node ) ) {
+          $seconds = $this->delay_seconds( $params, $state['context'] );
+          if ( ( $state['mode'] ?? 'sync' ) !== 'async' ) {
+            // Test once: nobody wants to sit through a two-day wait. Short
+            // waits are honoured so demos still feel real, longer ones skipped.
+            if ( $seconds > 0 && $seconds <= self::TEST_WAIT_MAX_SECONDS ) {
+              sleep( $seconds );
+              $output = [ 'waited' => $seconds, 'resume_at' => null ];
+            }
+            else {
+              $output = [ 'waited' => 0, 'resume_at' => null, 'skipped' => $seconds > 0 ];
+            }
+          }
+          else if ( $seconds > 0 ) {
+            // Live run: park it. run_step() sees pause_until, stores the run as
+            // "waiting" and schedules the next pass for that time.
+            $resume_at = time() + $seconds;
+            $state['pause_until'] = $resume_at;
+            $output = [ 'waited' => $seconds, 'resume_at' => wp_date( 'Y-m-d H:i:s', $resume_at ) ];
+          }
+          else {
+            $output = [ 'waited' => 0, 'resume_at' => null ];
           }
         }
         else if ( $this->is_router( $node ) ) {
@@ -822,6 +879,20 @@ class Meow_MWFLOW_Runner {
       }
     }
     return reset( $nodes ) ?: null;
+  }
+
+  private function is_delay( $node ) {
+    return ( $node['data']['integration'] ?? '' ) === 'core'
+      && ( $node['data']['action'] ?? '' ) === 'delay';
+  }
+
+  /** Total seconds a Wait step asks for. Honours the pre-0.1.5 `seconds` param. */
+  private function delay_seconds( $params, $context ) {
+    $amount = $this->resolve_value( $params['amount'] ?? ( $params['seconds'] ?? 0 ), $context );
+    $units = [ 'seconds' => 1, 'minutes' => 60, 'hours' => 3600, 'days' => 86400 ];
+    $multiplier = $units[ (string) ( $params['unit'] ?? 'seconds' ) ] ?? 1;
+    $seconds = (int) round( (float) $amount * $multiplier );
+    return max( 0, min( self::MAX_WAIT_SECONDS, $seconds ) );
   }
 
   private function is_condition( $node ) {

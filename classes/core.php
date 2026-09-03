@@ -3,7 +3,7 @@
 if ( !defined( 'ABSPATH' ) ) { exit; }
 
 class Meow_MWFLOW_Core {
-  const DB_VERSION = '7';
+  const DB_VERSION = '8';
 
   public $registry;
   public $runner;
@@ -125,6 +125,118 @@ class Meow_MWFLOW_Core {
       ];
     }
     return wp_json_encode( [ 'nodes' => $nodes, 'edges' => $edges ] );
+  }
+
+  /**
+   * Pre-flight checks the editor chip and Publish rely on. Returns a list of
+   * { node_id, field, level, message }. 'error' blocks publishing, 'warning'
+   * only informs. Checks: a trigger exists and is configured, every step's
+   * plugin is active, required inputs are filled, {{ references }} point at
+   * something that exists, and every step is reachable from the trigger.
+   */
+  public function validate_definition( $definition, $trigger_type = '', $trigger_config = [] ) {
+    $issues = [];
+    $nodes = (array) ( $definition['nodes'] ?? [] );
+    $edges = (array) ( $definition['edges'] ?? [] );
+    $by_id = [];
+    $trigger_id = null;
+    foreach ( $nodes as $node ) {
+      if ( empty( $node['id'] ) ) { continue; }
+      $by_id[ $node['id'] ] = $node;
+      if ( ( $node['type'] ?? '' ) === 'trigger' || ( $node['data']['kind'] ?? '' ) === 'trigger' ) {
+        $trigger_id = $node['id'];
+      }
+    }
+
+    if ( $trigger_id === null ) {
+      $issues[] = $this->issue( null, null, 'error', __( 'The workflow has no trigger.', 'meow-workflow' ) );
+    }
+    else if ( $trigger_type === 'hook' && empty( $trigger_config['hook'] ) ) {
+      $issues[] = $this->issue( $trigger_id, 'hook', 'error', __( 'Trigger: choose which WordPress event starts the workflow.', 'meow-workflow' ) );
+    }
+    else if ( $trigger_type === 'rss' && empty( $trigger_config['feed_url'] ) ) {
+      $issues[] = $this->issue( $trigger_id, 'feed_url', 'error', __( 'Trigger: the RSS feed URL is missing.', 'meow-workflow' ) );
+    }
+
+    $known_roots = [ 'trigger', 'site_name', 'site_url', 'admin_email', 'now', 'today', 'today_human', 'year' ];
+    foreach ( $by_id as $id => $node ) {
+      if ( $id === $trigger_id ) { continue; }
+      $action = $this->registry->get_action( $node['data']['integration'] ?? '', $node['data']['action'] ?? '' );
+      if ( !$action ) {
+        $issues[] = $this->issue( $id, null, 'error', sprintf(
+          /* translators: %s is the step id */
+          __( 'Step "%s" needs a plugin that is not active.', 'meow-workflow' ), $id
+        ) );
+        continue;
+      }
+      $label = sprintf( '%s (%s)', $action['name'] ?? $id, $id );
+      $params = (array) ( $node['data']['params'] ?? [] );
+      foreach ( (array) ( $action['inputs'] ?? [] ) as $field ) {
+        if ( empty( $field['required'] ) || ( $field['type'] ?? '' ) === 'boolean' ) { continue; }
+        $value = $params[ $field['id'] ] ?? ( $field['default'] ?? null );
+        if ( $value === null || $value === '' || ( is_array( $value ) && empty( $value ) ) ) {
+          $issues[] = $this->issue( $id, $field['id'], 'error', sprintf(
+            /* translators: 1: step name and id, 2: field name */
+            __( '%1$s: "%2$s" is required.', 'meow-workflow' ), $label, $field['name'] ?? $field['id']
+          ) );
+        }
+      }
+      $seen = [];
+      foreach ( $params as $field_id => $value ) {
+        foreach ( $this->reference_roots( $value ) as $root ) {
+          if ( isset( $seen[ $root ] ) || in_array( $root, $known_roots, true ) || isset( $by_id[ $root ] ) ) { continue; }
+          $seen[ $root ] = true;
+          $issues[] = $this->issue( $id, (string) $field_id, 'error', sprintf(
+            /* translators: 1: step name and id, 2: the referenced step id */
+            __( '%1$s uses {{ %2$s }}, but there is no step called "%2$s".', 'meow-workflow' ), $label, $root
+          ) );
+        }
+      }
+    }
+
+    if ( $trigger_id !== null ) {
+      $reachable = [ $trigger_id => true ];
+      $stack = [ $trigger_id ];
+      while ( $stack ) {
+        $current = array_pop( $stack );
+        foreach ( $edges as $edge ) {
+          $target = $edge['target'] ?? '';
+          if ( ( $edge['source'] ?? '' ) === $current && $target !== '' && !isset( $reachable[ $target ] ) ) {
+            $reachable[ $target ] = true;
+            $stack[] = $target;
+          }
+        }
+      }
+      foreach ( $by_id as $id => $node ) {
+        if ( !isset( $reachable[ $id ] ) ) {
+          $issues[] = $this->issue( $id, null, 'warning', sprintf(
+            /* translators: %s is the step id */
+            __( 'Step "%s" is not connected to the workflow, so it will never run.', 'meow-workflow' ), $id
+          ) );
+        }
+      }
+    }
+    return $issues;
+  }
+
+  private function issue( $node_id, $field, $level, $message ) {
+    return [ 'node_id' => $node_id, 'field' => $field, 'level' => $level, 'message' => $message ];
+  }
+
+  /** The first path segment of every {{ reference }} found in a value, recursively. */
+  private function reference_roots( $value ) {
+    $roots = [];
+    if ( is_string( $value ) ) {
+      if ( preg_match_all( '/\{\{\s*([A-Za-z0-9_]+)/', $value, $m ) ) {
+        $roots = $m[1];
+      }
+    }
+    else if ( is_array( $value ) ) {
+      foreach ( $value as $item ) {
+        $roots = array_merge( $roots, $this->reference_roots( $item ) );
+      }
+    }
+    return $roots;
   }
 
   /**
@@ -432,6 +544,50 @@ class Meow_MWFLOW_Core {
   }
 
   /**
+   * Park a live run at a Wait step. The queue (already holding the steps
+   * after the wait) is persisted with the state; `resume_at` tells the Runs
+   * screen and the watchdog when it is due back.
+   */
+  public function pause_run( $run_id, $state, $resume_at_ts ) {
+    global $wpdb;
+    $wpdb->update(
+      "{$wpdb->prefix}mwflow_runs",
+      [
+        'status'          => 'waiting',
+        'resume_at'       => wp_date( 'Y-m-d H:i:s', (int) $resume_at_ts ),
+        'current_step_id' => $state['queue'][0] ?? null,
+        'step_state_json' => wp_json_encode( $state ),
+        'updated_at'      => current_time( 'mysql' ),
+      ],
+      [ 'id' => $run_id ]
+    );
+  }
+
+  public function resume_run( $run_id ) {
+    global $wpdb;
+    $wpdb->update(
+      "{$wpdb->prefix}mwflow_runs",
+      [ 'status' => 'running', 'resume_at' => null, 'updated_at' => current_time( 'mysql' ) ],
+      [ 'id' => $run_id ]
+    );
+  }
+
+  /** Waiting runs whose resume time passed more than $grace_seconds ago. */
+  public function get_overdue_waits( $grace_seconds, $limit = 20 ) {
+    global $wpdb;
+    return (array) $wpdb->get_results( $wpdb->prepare(
+      "SELECT id, flow_id, resume_at
+       FROM {$wpdb->prefix}mwflow_runs
+       WHERE status = 'waiting'
+         AND resume_at IS NOT NULL
+         AND resume_at < DATE_SUB( %s, INTERVAL %d SECOND )
+       ORDER BY id ASC
+       LIMIT %d",
+      current_time( 'mysql' ), (int) $grace_seconds, (int) $limit
+    ) );
+  }
+
+  /**
    * Runs still marked `running` whose heartbeat is older than $seconds.
    * Either the node is genuinely taking that long, or the process that was
    * advancing the run died (fatal, timeout, missed cron pass). The watchdog
@@ -477,6 +633,84 @@ class Meow_MWFLOW_Core {
       $update['steps_json'] = wp_json_encode( $this->state_to_steps( $state ) );
     }
     $wpdb->update( "{$wpdb->prefix}mwflow_runs", $update, [ 'id' => $run_id ] );
+
+    if ( $status !== 'failed' && $status !== 'done' ) { return; }
+    $flow_id = (int) $wpdb->get_var( $wpdb->prepare(
+      "SELECT flow_id FROM {$wpdb->prefix}mwflow_runs WHERE id = %d", $run_id
+    ) );
+    $mode = is_array( $state ) ? ( $state['mode'] ?? '' ) : '';
+    do_action( $status === 'failed' ? 'mwflow_run_failed' : 'mwflow_run_done', $run_id, $flow_id, $error, $mode );
+    // Only live runs (cron, webhook, schedule) deserve an email: a failed
+    // "Test once" is already on screen in front of the person who ran it.
+    if ( $status === 'failed' && $mode === 'async' ) {
+      $this->notify_run_failed( $run_id, $flow_id, $state, $error );
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Settings + failure notifications                                    */
+  /* ------------------------------------------------------------------ */
+
+  public function get_settings() {
+    $defaults = [
+      'notify_failures' => true,
+      'notify_email'    => '',
+    ];
+    $stored = get_option( 'mwflow_settings', [] );
+    return array_merge( $defaults, is_array( $stored ) ? $stored : [] );
+  }
+
+  public function update_settings( $data ) {
+    $settings = $this->get_settings();
+    if ( array_key_exists( 'notify_failures', $data ) ) {
+      $settings['notify_failures'] = !empty( $data['notify_failures'] );
+    }
+    if ( array_key_exists( 'notify_email', $data ) ) {
+      $email = sanitize_email( (string) $data['notify_email'] );
+      $settings['notify_email'] = is_email( $email ) ? $email : '';
+    }
+    update_option( 'mwflow_settings', $settings, false );
+    return $settings;
+  }
+
+  /**
+   * Email the admin when a live workflow fails. Before this, a broken
+   * scheduled or webhook flow only left a line in the log file, and people
+   * found out weeks later. One email per flow per hour so a webhook flood
+   * can't turn into an inbox flood.
+   */
+  private function notify_run_failed( $run_id, $flow_id, $state, $error ) {
+    $settings = $this->get_settings();
+    if ( empty( $settings['notify_failures'] ) ) { return; }
+    $to = $settings['notify_email'] ?: get_option( 'admin_email' );
+    if ( !is_email( $to ) ) { return; }
+    $throttle_key = 'mwflow_fail_mail_' . (int) $flow_id;
+    if ( get_transient( $throttle_key ) ) { return; }
+    set_transient( $throttle_key, 1, HOUR_IN_SECONDS );
+
+    $flow = $this->get_flow( $flow_id );
+    $flow_name = $flow ? $flow['name'] : sprintf( '#%d', $flow_id );
+    $failed_step = '';
+    foreach ( (array) ( $state['states'] ?? [] ) as $node_id => $s ) {
+      if ( ( $s['status'] ?? '' ) === 'failed' ) { $failed_step = $node_id; break; }
+    }
+    $runs_url = admin_url( 'admin.php?page=mwflow_dashboard&nekoTab=runs' );
+
+    /* translators: %s is the workflow name */
+    $subject = sprintf( __( '[%1$s] Workflow "%2$s" failed', 'meow-workflow' ), get_bloginfo( 'name' ), $flow_name );
+    $lines = [
+      sprintf( __( 'The workflow "%s" failed during a live run.', 'meow-workflow' ), $flow_name ),
+      '',
+    ];
+    if ( $failed_step ) {
+      $lines[] = sprintf( __( 'Step: %s', 'meow-workflow' ), $failed_step );
+    }
+    $lines[] = sprintf( __( 'Error: %s', 'meow-workflow' ), (string) $error );
+    $lines[] = '';
+    $lines[] = sprintf( __( 'See the run: %s', 'meow-workflow' ), $runs_url );
+    $lines[] = '';
+    $lines[] = __( 'You will get at most one of these per workflow per hour. Turn them off under Meow Apps → Workflow → Settings.', 'meow-workflow' );
+    wp_mail( $to, $subject, implode( "\n", $lines ) );
   }
 
   /**
@@ -525,7 +759,7 @@ class Meow_MWFLOW_Core {
     $limit = max( 1, min( 500, (int) $limit ) );
     if ( $flow_id ) {
       $rows = $wpdb->get_results( $wpdb->prepare(
-        "SELECT id, flow_id, status, started_at, finished_at, error
+        "SELECT id, flow_id, status, started_at, finished_at, resume_at, error
          FROM {$wpdb->prefix}mwflow_runs
          WHERE flow_id = %d
          ORDER BY started_at DESC
@@ -534,7 +768,7 @@ class Meow_MWFLOW_Core {
     }
     else {
       $rows = $wpdb->get_results( $wpdb->prepare(
-        "SELECT id, flow_id, status, started_at, finished_at, error
+        "SELECT id, flow_id, status, started_at, finished_at, resume_at, error
          FROM {$wpdb->prefix}mwflow_runs
          ORDER BY started_at DESC
          LIMIT %d", $limit
@@ -547,6 +781,7 @@ class Meow_MWFLOW_Core {
         'status'      => $r->status,
         'started_at'  => $r->started_at,
         'finished_at' => $r->finished_at,
+        'resume_at'   => $r->resume_at,
         'error'       => $r->error,
       ];
     }, (array) $rows );
@@ -621,6 +856,7 @@ class Meow_MWFLOW_Core {
       started_at DATETIME NULL,
       updated_at DATETIME NULL,
       finished_at DATETIME NULL,
+      resume_at DATETIME NULL,
       trigger_payload_json LONGTEXT NULL,
       steps_json LONGTEXT NULL,
       current_step_id VARCHAR(64) NULL,
