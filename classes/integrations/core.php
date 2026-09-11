@@ -327,7 +327,28 @@ class Meow_MWFLOW_Integrations_Core {
       $args['headers'] = is_array( $inputs['headers'] ) ? $inputs['headers'] : (array) json_decode( $inputs['headers'], true );
     }
     if ( !empty( $inputs['body'] ) ) {
-      $args['body'] = is_string( $inputs['body'] ) ? $inputs['body'] : wp_json_encode( $inputs['body'] );
+      $body = is_string( $inputs['body'] ) ? $inputs['body'] : wp_json_encode( $inputs['body'] );
+      $content_type = '';
+      foreach ( (array) ( $args['headers'] ?? [] ) as $name => $header ) {
+        if ( strtolower( (string) $name ) === 'content-type' ) { $content_type = strtolower( (string) $header ); }
+      }
+      // A body that starts like JSON is meant as JSON. Catch a broken one here,
+      // with a local message, instead of letting the remote API answer 400 with
+      // nothing to go on. Sending it as JSON without asking is what people expect.
+      $looks_json = in_array( substr( ltrim( $body ), 0, 1 ), [ '{', '[' ], true );
+      if ( $looks_json && ( $content_type === '' || strpos( $content_type, 'json' ) !== false ) ) {
+        json_decode( $body );
+        if ( json_last_error() !== JSON_ERROR_NONE ) {
+          throw new Exception( sprintf(
+            'The request body is not valid JSON once your data is inserted (%s). Check the references in the Body field: a value with quotes or line breaks must sit inside a quoted string, e.g. "content": "{{ step.field }}".',
+            json_last_error_msg()
+          ) );
+        }
+        if ( $content_type === '' ) {
+          $args['headers'] = array_merge( (array) ( $args['headers'] ?? [] ), [ 'Content-Type' => 'application/json' ] );
+        }
+      }
+      $args['body'] = $body;
     }
     // SSRF guard — matters because a webhook-triggered flow can drive this URL
     // from an unauthenticated payload while running as the flow's admin author.

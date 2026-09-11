@@ -362,7 +362,9 @@ Always-available values (reference directly, no step needed):
   {{ site_name }}, {{ site_url }}, {{ admin_email }}, {{ now }}, {{ today }}, {{ today_human }}, {{ year }}
 
 Formatting filters (append with a pipe): {{ post.title | upper }}, {{ x | lower }}, {{ x | truncate:120 }},
-  {{ x | default:"N/A" }}, {{ now | date:"F j, Y" }}, {{ n | number_format }}, {{ html | strip_tags }}
+  {{ x | default:"N/A" }}, {{ now | date:"F j, Y" }}, {{ n | number_format }}, {{ html | strip_tags }}, {{ x | json }}
+JSON bodies (HTTP request, headers): write references inside the quoted string, e.g. { "content": "{{ scrape.markdown }}" }.
+  Quotes and line breaks in the data are escaped automatically. Use {{ x | json }} only to insert a whole object or array unquoted.
 
 Step / data rules:
 - ONLY use integrations and actions from the provided list.

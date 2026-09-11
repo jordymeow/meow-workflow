@@ -333,7 +333,7 @@ const SetupAssistant = ({ flows, aiAvailable, onInstallExample, onBuildWithAi, o
             </ChoiceButton>
           </ChoiceButtons>
           {state.steps.references === 'info' && <InfoBox>
-            You never have to type references by hand: every field has an <b>Insert data</b> button listing everything available. Used references appear as <b>coloured chips</b> under the field — click one to jump to the step it comes from; a <b>red chip</b> means the reference is broken. Renaming a step's <code>#id</code> (click it in the side panel) safely rewrites every reference to it. Formatting filters work too: <code>{'{{ post.title | upper }}'}</code>, <code>{'{{ now | date:"F j" }}'}</code>.
+            You never have to type references by hand: every field has an <b>Insert data</b> button listing everything available. Used references appear as <b>coloured chips</b> under the field — click one to jump to the step it comes from; a <b>red chip</b> means the reference is broken. Renaming a step's <code>#id</code> (click it in the side panel) safely rewrites every reference to it. Formatting filters work too: <code>{'{{ post.title | upper }}'}</code>, <code>{'{{ now | date:"F j" }}'}</code>, <code>{'{{ data | json }}'}</code>. In a JSON body, a reference inside quotes is escaped for you, so <code>{'{ "content": "{{ scrape.markdown }}" }'}</code> stays valid whatever the text contains.
           </InfoBox>}
         </StepContent>
       </StyledStep>

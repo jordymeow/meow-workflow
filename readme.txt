@@ -5,7 +5,7 @@ Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.1.5
+Stable tag: 0.1.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,12 @@ No. AI steps use your own installed AI Engine (and your own API keys). The HTTP 
 4. Schedule a workflow — this weekly content brief runs every Monday, gathers recent posts, and writes a summary with AI Engine.
 
 == Changelog ==
+
+= 0.1.6 (2026/09/11) =
+* Add: References inside quoted strings of JSON bodies are now escaped automatically.
+* Add: JSON bodies are sent with a Content-Type of application/json.
+* Fix: Invalid JSON bodies are rejected with a clear message before the request is made.
+* Update: Documented the json filter in the assistant and the help.
 
 = 0.1.5 (2026/09/03) =
 * Add: Validate a workflow before publishing, with a list of issues to fix.

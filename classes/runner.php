@@ -1042,17 +1042,76 @@ class Meow_MWFLOW_Runner {
     if ( preg_match( '/^\s*\{\{\s*(.+?)\s*\}\}\s*$/', $value, $m ) ) {
       return $this->resolve_expression( trim( $m[1] ), $context );
     }
+    // A JSON template ({ "content": "{{ scrape.markdown }}" }) needs the
+    // references inside its quoted strings escaped, or the first quote or
+    // newline in the data breaks the document. Nobody guesses "| json".
+    if ( $this->is_json_template( $value, $pattern ) ) {
+      return $this->interpolate_json_template( $value, $context );
+    }
     // Embedded expression(s) → interpolate into the surrounding string.
     return preg_replace_callback( $pattern, function ( $m ) use ( $context ) {
-      $resolved = $this->resolve_expression( trim( $m[1] ), $context );
-      if ( is_array( $resolved ) || is_object( $resolved ) ) {
-        return wp_json_encode( $resolved );
-      }
-      if ( is_bool( $resolved ) ) {
-        return $resolved ? 'true' : 'false';
-      }
-      return (string) $resolved;
+      return $this->stringify( $this->resolve_expression( trim( $m[1] ), $context ) );
     }, $value );
+  }
+
+  private function stringify( $resolved ) {
+    if ( is_array( $resolved ) || is_object( $resolved ) ) {
+      return wp_json_encode( $resolved );
+    }
+    if ( is_bool( $resolved ) ) {
+      return $resolved ? 'true' : 'false';
+    }
+    return (string) $resolved;
+  }
+
+  /**
+   * True when the string is a JSON object/array once every reference is
+   * replaced by a literal. "0" is valid both quoted and bare, so a reference
+   * used as a value or inside a string both pass; one used as a key does not.
+   */
+  private function is_json_template( $value, $pattern ) {
+    $first = substr( ltrim( $value ), 0, 1 );
+    if ( $first !== '{' && $first !== '[' ) {
+      return false;
+    }
+    json_decode( preg_replace( $pattern, '0', $value ) );
+    return json_last_error() === JSON_ERROR_NONE;
+  }
+
+  /**
+   * Walk the template once, tracking whether we are inside a JSON string.
+   * A reference inside quotes is inserted as escaped string content; outside
+   * quotes it behaves exactly like plain interpolation, so bodies that already
+   * use "| json" keep working unchanged.
+   */
+  private function interpolate_json_template( $value, $context ) {
+    $out = '';
+    $in_string = false;
+    $len = strlen( $value );
+    for ( $i = 0; $i < $len; $i++ ) {
+      $ch = $value[ $i ];
+      if ( $ch === '{' && preg_match( '/\G\{\{\s*(.+?)\s*\}\}/', $value, $m, 0, $i ) ) {
+        $text = $this->stringify( $this->resolve_expression( trim( $m[1] ), $context ) );
+        $out .= $in_string ? $this->escape_json_string( $text ) : $text;
+        $i += strlen( $m[0] ) - 1;
+        continue;
+      }
+      if ( $in_string && $ch === '\\' ) {
+        $out .= $ch . ( $value[ $i + 1 ] ?? '' );
+        $i++;
+        continue;
+      }
+      if ( $ch === '"' ) {
+        $in_string = !$in_string;
+      }
+      $out .= $ch;
+    }
+    return $out;
+  }
+
+  private function escape_json_string( $text ) {
+    $encoded = wp_json_encode( (string) $text, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
+    return is_string( $encoded ) ? substr( $encoded, 1, -1 ) : (string) $text;
   }
 
   /**
