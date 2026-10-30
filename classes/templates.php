@@ -50,7 +50,7 @@ class Meow_MWFLOW_Templates {
     return [
       'id'           => 'notify_on_publish',
       'name'         => __( 'Email Me When a Post Is Published', 'meow-workflow' ),
-      'description'  => __( 'Every time a post goes live, you get an email with its title and a link. Works out of the box — no other plugin needed.', 'meow-workflow' ),
+      'description'  => __( 'Every time a post goes live, you get an email with its title and a link. Works out of the box, no other plugin needed.', 'meow-workflow' ),
       'tag'          => __( 'Basics', 'meow-workflow' ),
       'category'     => 'basics',
       'requires'     => [ 'wordpress' ],
@@ -81,7 +81,7 @@ class Meow_MWFLOW_Templates {
     return [
       'id'           => 'weekly_digest',
       'name'         => __( 'Weekly Digest of New Posts', 'meow-workflow' ),
-      'description'  => __( 'Every Monday morning, an email with everything published in the last 7 days. Works out of the box — no other plugin needed.', 'meow-workflow' ),
+      'description'  => __( 'Every Monday morning, an email with everything published in the last 7 days. Works out of the box, no other plugin needed.', 'meow-workflow' ),
       'tag'          => __( 'Basics', 'meow-workflow' ),
       'category'     => 'basics',
       'requires'     => [ 'wordpress' ],
@@ -97,7 +97,7 @@ class Meow_MWFLOW_Templates {
           ] ),
           self::action_node( 'email', 560, 'core', 'send_email', [
             'to'      => '{{ admin_email }}',
-            'subject' => __( '{{ site_name }} — this week\'s posts', 'meow-workflow' ),
+            'subject' => __( '{{ site_name }}: this week\'s posts', 'meow-workflow' ),
             'body'    => __( "Published on {{ site_name }} in the last 7 days ({{ recent.count }} posts):\n\n{{ recent.summary }}", 'meow-workflow' ),
           ] ),
         ],
@@ -113,7 +113,7 @@ class Meow_MWFLOW_Templates {
     return [
       'id'           => 'comment_alert',
       'name'         => __( 'Email Me About New Comments', 'meow-workflow' ),
-      'description'  => __( 'When someone comments, you get an email with who wrote it and what they said. Works out of the box — no other plugin needed.', 'meow-workflow' ),
+      'description'  => __( 'When someone comments, you get an email with who wrote it and what they said. Works out of the box, no other plugin needed.', 'meow-workflow' ),
       'tag'          => __( 'Basics', 'meow-workflow' ),
       'category'     => 'basics',
       'requires'     => [ 'wordpress' ],
@@ -143,19 +143,19 @@ class Meow_MWFLOW_Templates {
   private static function coin_flip() {
     $branch_y = 60 + 3 * 150;
     $log_heads = self::action_node( 'log_heads', 0, 'core', 'log', [
-      'message' => __( '🪙 HEADS — the coin flip gave: {{ flip.value }}', 'meow-workflow' ),
+      'message' => __( '🪙 HEADS! The coin flip gave: {{ flip.value }}', 'meow-workflow' ),
       'level'   => 'info',
     ] );
     $log_heads['position'] = [ 'x' => 180, 'y' => $branch_y ];
     $log_tails = self::action_node( 'log_tails', 0, 'core', 'log', [
-      'message' => __( '🪙 TAILS — the coin flip gave: {{ flip.value }}', 'meow-workflow' ),
+      'message' => __( '🪙 TAILS! The coin flip gave: {{ flip.value }}', 'meow-workflow' ),
       'level'   => 'info',
     ] );
     $log_tails['position'] = [ 'x' => 460, 'y' => $branch_y ];
 
     return [
       'id'           => 'coin_flip',
-      'name'         => __( 'Coin Flip — Learn Branching', 'meow-workflow' ),
+      'name'         => __( 'Coin Flip: Learn Branching', 'meow-workflow' ),
       'description'  => __( 'Press Test once: a coin is flipped and only the matching path runs. The fastest way to understand Branch By Value.', 'meow-workflow' ),
       'tag'          => __( 'Basics', 'meow-workflow' ),
       'category'     => 'basics',
@@ -211,7 +211,7 @@ class Meow_MWFLOW_Templates {
           ] ),
           self::action_node( 'notify', 560, 'core', 'send_email', [
             'to'      => '{{ admin_email }}',
-            'subject' => __( 'New order #{{ order.id }} — {{ order.total }} {{ order.currency }}', 'meow-workflow' ),
+            'subject' => __( 'New order #{{ order.id }} ({{ order.total }} {{ order.currency }})', 'meow-workflow' ),
             'body'    => __( "New order on {{ site_name }}!\n\nCustomer: {{ order.customer_name }} ({{ order.customer_email }})\nTotal: {{ order.total }} {{ order.currency }}\nPayment: {{ order.payment_method }}\n\nItems:\n{{ order.items_summary }}", 'meow-workflow' ),
           ] ),
         ],
@@ -275,7 +275,7 @@ class Meow_MWFLOW_Templates {
         'nodes' => [
           self::trigger_node( __( 'Every week at 8:00 AM', 'meow-workflow' ), 'schedule' ),
           self::action_node( 'write_draft', 280, 'ai-engine', 'json', [
-            'message' => __( "You write for the blog \"{{ site_name }}\".\n\nTOPIC (edit me!): practical tips our readers can use — pick one fresh, specific angle each time.\n\nWrite an original blog post on that topic: an engaging title and 4-6 short HTML paragraphs (<p>…</p>, optional <h2> subheadings). No invented facts.\n\nReturn ONLY JSON: {\"title\": \"…\", \"content\": \"…\"}", 'meow-workflow' ),
+            'message' => __( "You write for the blog \"{{ site_name }}\".\n\nTOPIC (edit me!): practical tips our readers can use. Pick one fresh, specific angle each time.\n\nWrite an original blog post on that topic: an engaging title and 4-6 short paragraphs, with optional subheadings. No invented facts.\n\nThe content must be Gutenberg block markup, so it opens as real blocks in the editor and inherits your theme's styles. Wrap every paragraph as:\n<!-- wp:paragraph -->\n<p>Your paragraph.</p>\n<!-- /wp:paragraph -->\nand every subheading as:\n<!-- wp:heading -->\n<h2>Your subheading</h2>\n<!-- /wp:heading -->\n\nReturn ONLY JSON: {\"title\": \"…\", \"content\": \"…\"}", 'meow-workflow' ),
           ] ),
           self::action_node( 'save_draft', 560, 'wordpress', 'create_post', [
             'title'   => '{{ write_draft.data.title }}',
@@ -309,7 +309,7 @@ class Meow_MWFLOW_Templates {
         'nodes' => [
           self::trigger_node( __( 'When a new RSS item appears', 'meow-workflow' ), 'rss' ),
           self::action_node( 'rewrite', 280, 'ai-engine', 'json', [
-            'message' => __( "You write for the blog \"{{ site_name }}\".\n\nBelow is a news item from another site. Write a SHORT original post about it in our own voice: summarise the key points in your own words (never copy sentences), 2-4 HTML paragraphs, and end with: <p>Source: <a href=\"{{ trigger.link }}\">{{ trigger.title }}</a></p>\n\nReturn ONLY JSON: {\"title\": \"…\", \"content\": \"…\"}\n\nSOURCE TITLE: {{ trigger.title }}\nSOURCE CONTENT:\n{{ trigger.content }}", 'meow-workflow' ),
+            'message' => __( "You write for the blog \"{{ site_name }}\".\n\nBelow is a news item from another site. Write a SHORT original post about it in our own voice: summarise the key points in your own words (never copy sentences), 2-4 paragraphs.\n\nThe content must be Gutenberg block markup, so it opens as real blocks in the editor and inherits your theme's styles. Wrap every paragraph as:\n<!-- wp:paragraph -->\n<p>Your paragraph.</p>\n<!-- /wp:paragraph -->\nThe last paragraph must credit the source exactly like this:\n<!-- wp:paragraph -->\n<p>Source: <a href=\"{{ trigger.link }}\">{{ trigger.title }}</a></p>\n<!-- /wp:paragraph -->\n\nReturn ONLY JSON: {\"title\": \"…\", \"content\": \"…\"}\n\nSOURCE TITLE: {{ trigger.title }}\nSOURCE CONTENT:\n{{ trigger.content }}", 'meow-workflow' ),
           ] ),
           self::action_node( 'save_draft', 560, 'wordpress', 'create_post', [
             'title'   => '{{ rewrite.data.title }}',
@@ -334,7 +334,7 @@ class Meow_MWFLOW_Templates {
       'id'           => 'ai_excerpt_on_publish',
       'name'         => __( 'Write Excerpts Automatically', 'meow-workflow' ),
       'category'     => 'ai',
-      'description'  => __( 'Every time a post is published, AI Engine writes a one-sentence excerpt and saves it on the post.', 'meow-workflow' ),
+      'description'  => __( 'When a post is published without an excerpt, AI Engine writes a one-sentence one and saves it on the post.', 'meow-workflow' ),
       'tag'          => __( 'AI', 'meow-workflow' ),
       'requires'     => [ 'ai-engine', 'wordpress' ],
       'trigger_type' => 'hook',
@@ -345,15 +345,28 @@ class Meow_MWFLOW_Templates {
           self::action_node( 'fetch_post', 280, 'wordpress', 'get_post', [
             'post_id' => '{{ trigger.post_id }}',
           ] ),
-          self::action_node( 'write_excerpt', 560, 'ai-engine', 'fast_text', [
+          // Never overwrite an excerpt someone wrote, and never pay for an AI
+          // call when there is nothing to do.
+          self::action_node( 'has_no_excerpt', 560, 'core', 'condition', [
+            'match'      => 'all',
+            'conditions' => [
+              [ 'field' => '{{ fetch_post.excerpt }}', 'op' => 'is_empty', 'value' => '' ],
+            ],
+          ] ),
+          self::action_node( 'write_excerpt', 840, 'ai-engine', 'fast_text', [
             'message' => __( "Write a single-sentence excerpt (max 160 chars, plain text, no quotes).\n\nTitle: {{ fetch_post.title }}\n\nContent:\n{{ fetch_post.content }}", 'meow-workflow' ),
           ] ),
-          self::action_node( 'save_excerpt', 840, 'wordpress', 'update_post', [
+          self::action_node( 'save_excerpt', 1120, 'wordpress', 'update_post', [
             'post_id'  => '{{ trigger.post_id }}',
             'excerpt'  => '{{ write_excerpt.text }}',
           ] ),
         ],
-        'edges' => self::chain_edges( [ 'trigger', 'fetch_post', 'write_excerpt', 'save_excerpt' ] ),
+        'edges' => [
+          [ 'id' => 'e_trigger_fetch_post', 'source' => 'trigger', 'target' => 'fetch_post' ],
+          [ 'id' => 'e_fetch_post_has_no_excerpt', 'source' => 'fetch_post', 'target' => 'has_no_excerpt' ],
+          [ 'id' => 'e_has_no_excerpt_write_excerpt', 'source' => 'has_no_excerpt', 'sourceHandle' => 'true', 'target' => 'write_excerpt' ],
+          [ 'id' => 'e_write_excerpt_save_excerpt', 'source' => 'write_excerpt', 'target' => 'save_excerpt' ],
+        ],
       ],
     ];
   }
@@ -388,7 +401,7 @@ class Meow_MWFLOW_Templates {
       'id'           => 'ai_moderate_comments',
       'name'         => __( 'Moderate Comments With AI', 'meow-workflow' ),
       'category'     => 'ai',
-      'description'  => __( 'When a comment is posted, AI Engine reads it and classifies it — spam is marked as spam, insulting comments are held for review, legitimate ones are logged.', 'meow-workflow' ),
+      'description'  => __( 'When a comment is posted, AI Engine reads it and classifies it: spam is marked as spam, insulting comments are held for review, legitimate ones are logged.', 'meow-workflow' ),
       'tag'          => __( 'AI', 'meow-workflow' ),
       'requires'     => [ 'ai-engine', 'wordpress' ],
       'trigger_type' => 'hook',
@@ -449,11 +462,11 @@ class Meow_MWFLOW_Templates {
             'user_id' => '{{ trigger.user_id }}',
           ] ),
           self::action_node( 'compose', 560, 'ai-engine', 'fast_text', [
-            'message' => __( "Write a friendly 3-sentence welcome email for a new user named {{ fetch_user.display_name }} who just registered on the site \"{{ site_name }}\". Warm but not pushy. No greeting line — start with the message itself.", 'meow-workflow' ),
+            'message' => __( "Write a friendly 3-sentence welcome email for a new user named {{ fetch_user.display_name }} who just registered on the site \"{{ site_name }}\". Warm but not pushy. No greeting line, start with the message itself.", 'meow-workflow' ),
           ] ),
           self::action_node( 'send', 840, 'core', 'send_email', [
             'to'      => '{{ fetch_user.email }}',
-            'subject' => __( 'Welcome — glad to have you here!', 'meow-workflow' ),
+            'subject' => __( 'Welcome, glad to have you here!', 'meow-workflow' ),
             'body'    => "Hi {{ fetch_user.display_name }},\n\n{{ compose.text }}\n\nThanks!",
           ] ),
         ],
@@ -492,8 +505,8 @@ class Meow_MWFLOW_Templates {
           ] ),
           self::action_node( 'email', 840, 'core', 'send_email', [
             'to'      => '{{ admin_email }}',
-            'subject' => __( 'Weekly content brief — {{ today_human }}', 'meow-workflow' ),
-            'body'    => "Your weekly brief for {{ site_name }}:\n\n{{ brief.text }}\n\n— sent by Meow Workflow",
+            'subject' => __( 'Weekly content brief, {{ today_human }}', 'meow-workflow' ),
+            'body'    => "Your weekly brief for {{ site_name }}:\n\n{{ brief.text }}\n\nSent by Meow Workflow",
           ] ),
         ],
         'edges' => self::chain_edges( [ 'trigger', 'recent', 'brief', 'email' ] ),
@@ -523,11 +536,11 @@ class Meow_MWFLOW_Templates {
           self::trigger_node( __( 'Every morning at 09:00', 'meow-workflow' ), 'schedule' ),
           self::action_node( 'summary', 280, 'seo-engine', 'get_site_summary', [] ),
           self::action_node( 'narrate', 560, 'ai-engine', 'text', [
-            'message' => __( "You are an SEO assistant emailing the site owner each morning. Be concise — 4 short paragraphs max.\n\n1. Site health: \"{{ summary.summary_text }}\".\n2. Top posts this month: {{ summary.top_posts }}.\n3. One concrete action they could take today, based on the numbers.\n4. Sign off with a single sentence of encouragement.\n\nPlain text, no markdown, no greeting line.", 'meow-workflow' ),
+            'message' => __( "You are an SEO assistant emailing the site owner each morning. Be concise: 4 short paragraphs max.\n\n1. Site health: \"{{ summary.summary_text }}\".\n2. Top posts this month: {{ summary.top_posts }}.\n3. One concrete action they could take today, based on the numbers.\n4. Sign off with a single sentence of encouragement.\n\nPlain text, no markdown, no greeting line.", 'meow-workflow' ),
           ] ),
           self::action_node( 'email', 840, 'core', 'send_email', [
             'to'      => '{{ admin_email }}',
-            'subject' => __( 'Daily SEO report — {{ summary.summary_text }}', 'meow-workflow' ),
+            'subject' => __( 'Daily SEO report: {{ summary.summary_text }}', 'meow-workflow' ),
             'body'    => '{{ narrate.text }}',
           ] ),
         ],

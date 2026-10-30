@@ -77,7 +77,7 @@ class Meow_MWFLOW_AI_Authoring {
     $prompt = trim( (string) $prompt );
     if ( $prompt === '' && $mode !== self::MODE_EXPLAIN ) {
       throw new Meow_MWFLOW_AI_Authoring_Exception(
-        __( 'Tell me what you want — a sentence or two is enough.', 'meow-workflow' ),
+        __( 'Tell me what you want. A sentence or two is enough.', 'meow-workflow' ),
         self::ERR_EMPTY_PROMPT
       );
     }
@@ -175,7 +175,7 @@ class Meow_MWFLOW_AI_Authoring {
       throw new Exception( __( 'No flow to explain.', 'meow-workflow' ) );
     }
     $linear = $this->linearise_existing( $context['definition'] );
-    $instructions = "You are a friendly assistant. Given a workflow definition, write a single short paragraph (max 4 sentences) explaining in plain English what this workflow does, when it runs, and what it produces. No JSON, no code blocks — just the paragraph.";
+    $instructions = "You are a friendly assistant. Given a workflow definition, write a single short paragraph (max 4 sentences) explaining in plain English what this workflow does, when it runs, and what it produces. No JSON, no code blocks, just the paragraph.";
     $message = wp_json_encode( $linear, JSON_PRETTY_PRINT );
     $text = $this->call_ai_text( $message, $instructions );
     return [ 'message' => $text ];
@@ -314,7 +314,7 @@ class Meow_MWFLOW_AI_Authoring {
 
     $ai_format_text = 'Output JSON in this format:
 {
-  "name": "Human-readable workflow name — like an email subject. Title Case. No identifiers, no snake_case, no underscores.",
+  "name": "Human-readable workflow name, like an email subject. Title Case. No identifiers, no snake_case, no underscores.",
   "rationale": "one sentence on why this design",
   "trigger": {
     "type": "manual" | "schedule" | "webhook" | "hook" | "rss",
@@ -332,7 +332,7 @@ class Meow_MWFLOW_AI_Authoring {
   ]
 }
 
-Workflow NAME rules (very important — this is the title the user sees):
+Workflow NAME rules (very important, this is the title the user sees):
 - Title Case, sentence-style. 3–8 words. No underscores. No quotation marks.
 - Describe what the workflow does, not its internals.
 - Examples of GOOD names:
@@ -350,12 +350,12 @@ Trigger config shapes:
 - manual:   {} (no config)
 - schedule: { "recurrence": "hourly|twicedaily|daily|weekly", "time": "HH:MM", "day": "monday|…|sunday" (weekly only) }
 - webhook:  {} (token is generated automatically; request body keys become {{ trigger.<key> }})
-- hook:     { "hook": "<wordpress_hook>", "args": <int> } — prefer a known WordPress event below.
+- hook:     { "hook": "<wordpress_hook>", "args": <int> }. Prefer a known WordPress event below.
 - rss:      { "feed_url": "<feed url, or \"\" if the user didn\'t give one>", "recurrence": "hourly|twicedaily|daily" }
             Fires once per NEW feed item → {{ trigger.title }}, {{ trigger.link }}, {{ trigger.content }}, {{ trigger.date }}, {{ trigger.author }}.
             Use this whenever the user wants to react to news/articles/feeds (e.g. "summarize new articles from …", "RSS to draft post").
 
-Known WordPress events (use these for "hook" triggers — each exposes friendly fields):
+Known WordPress events (use these for "hook" triggers, each exposes friendly fields):
 ' . $events_text . '
 
 Always-available values (reference directly, no step needed):
@@ -368,11 +368,11 @@ JSON bodies (HTTP request, headers): write references inside the quoted string, 
 
 Step / data rules:
 - ONLY use integrations and actions from the provided list.
-- Step ids ARE short snake_case slugs (e.g. "fetch_post", "summary") — users see them in {{ references }}, keep them readable.
+- Step ids ARE short snake_case slugs (e.g. "fetch_post", "summary"). Users see them in {{ references }}, keep them readable.
 - Reference earlier step outputs as {{ step_id.output_field }}.
 - For hook triggers, use the friendly field from the event table (e.g. {{ trigger.post_id }}), NOT {{ trigger.arg0 }}.
 - Use {{ admin_email }} for "email me / the admin"; never invent an address.
-- Keep flows short and focused — 2 to 5 steps is ideal. Do not invent steps.
+- Keep flows short and focused: 2 to 5 steps is ideal. Do not invent steps.
 - Required inputs MUST be filled. Optional inputs MAY be omitted.
 - For ai-engine actions, prefer leaving model/env empty (uses configured defaults).
 
@@ -383,7 +383,7 @@ Inside the loop, reference {{ <foreach_step_id>.item }} / .index / .count
 
 Conditions ("only if …" requests) use the core/condition action with EXACTLY this params shape:
   { "match": "all", "conditions": [ { "field": "{{ step_id.output }}", "op": "<operator>", "value": "<compare-to>" } ] }
-- "match" is "all" (AND) or "any" (OR) — NEVER a {{ reference }}.
+- "match" is "all" (AND) or "any" (OR), NEVER a {{ reference }}.
 - Each condition row needs "field" (what to check, usually a {{ reference }}), "op", and "value".
 - Operators: equals, not_equals, contains, not_contains, starts_with, ends_with, greater_than, less_than, is_empty, is_not_empty, is_true, is_false.
 - Steps AFTER a condition only run when it matches (the true branch). Put the conditional work after it.';
@@ -435,7 +435,7 @@ Conditions ("only if …" requests) use the core/condition action with EXACTLY t
     }
     if ( !is_array( $reply ) ) {
       throw new Meow_MWFLOW_AI_Authoring_Exception(
-        __( "The AI didn't return a workflow we could read. Try rewording your request — be specific about the trigger and the actions.", 'meow-workflow' ),
+        __( "The AI didn't return a workflow we could read. Try rewording your request, and be specific about the trigger and the actions.", 'meow-workflow' ),
         self::ERR_INVALID_OUTPUT
       );
     }
@@ -473,13 +473,13 @@ Conditions ("only if …" requests) use the core/condition action with EXACTLY t
     $lower = strtolower( $msg );
     if ( strpos( $lower, 'limit' ) !== false || strpos( $lower, 'quota' ) !== false || strpos( $lower, 'rate' ) !== false ) {
       return sprintf(
-        __( '%s — check AI Engine → Limits, or try a different environment.', 'meow-workflow' ),
+        __( '%s. Check AI Engine → Limits, or try a different environment.', 'meow-workflow' ),
         $msg
       );
     }
     if ( strpos( $lower, 'api key' ) !== false || strpos( $lower, 'unauthor' ) !== false || strpos( $lower, '401' ) !== false ) {
       return sprintf(
-        __( '%s — verify the API key for the active AI Engine environment.', 'meow-workflow' ),
+        __( '%s. Verify the API key for the active AI Engine environment.', 'meow-workflow' ),
         $msg
       );
     }
@@ -758,7 +758,7 @@ Conditions ("only if …" requests) use the core/condition action with EXACTLY t
       else if ( strpos( $lower, 'trigger' ) !== false )         { $bad_trigger++; }
     }
     if ( $unknown_action > 0 && $missing_input === 0 ) {
-      return __( "The AI tried to use a step that isn't installed. Try being more specific — for example, mention 'AI Engine', 'WordPress post', or 'send email' — so the AI picks from the steps you actually have.", 'meow-workflow' );
+      return __( "The AI tried to use a step that isn't installed. Try being more specific (for example, mention 'AI Engine', 'WordPress post', or 'send email') so the AI picks from the steps you actually have.", 'meow-workflow' );
     }
     if ( $missing_input > 0 && $unknown_action === 0 ) {
       return __( "The AI didn't fill in everything a step needs (like the email address, the prompt, or the URL). Try describing those details in your request.", 'meow-workflow' );

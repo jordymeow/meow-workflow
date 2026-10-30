@@ -60,7 +60,7 @@ class Meow_MWFLOW_Integrations_Woocommerce {
         Meow_MWFLOW_SDK::action( [
           'id'          => 'get_order',
           'name'        => __( 'Get order', 'meow-workflow' ),
-          'description' => __( 'Load an order — total, status, customer, and a ready-to-paste summary of its items.', 'meow-workflow' ),
+          'description' => __( 'Load an order: total, status, customer, and a ready-to-paste summary of its items.', 'meow-workflow' ),
           'icon'        => 'shopping-cart',
           'inputs'      => [
             Meow_MWFLOW_SDK::input( 'order_id', __( 'Order ID', 'meow-workflow' ), 'number', [ 'required' => true, 'placeholder' => '{{ trigger.order_id }}' ] ),
@@ -81,7 +81,7 @@ class Meow_MWFLOW_Integrations_Woocommerce {
         Meow_MWFLOW_SDK::action( [
           'id'          => 'add_order_note',
           'name'        => __( 'Add order note', 'meow-workflow' ),
-          'description' => __( 'Add a note to an order — private by default, or visible to the customer.', 'meow-workflow' ),
+          'description' => __( 'Add a note to an order, private by default or visible to the customer.', 'meow-workflow' ),
           'icon'        => 'file-text',
           'inputs'      => [
             Meow_MWFLOW_SDK::input( 'order_id', __( 'Order ID', 'meow-workflow' ), 'number', [ 'required' => true, 'placeholder' => '{{ trigger.order_id }}' ] ),

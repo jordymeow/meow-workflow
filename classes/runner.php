@@ -98,6 +98,9 @@ class Meow_MWFLOW_Runner {
   /** Run currently being advanced, so execute_next() can checkpoint mid-run. */
   private $active_run_id = null;
 
+  /** Flow of that run. The hook trigger reads it, see is_running_flow(). */
+  private $active_flow_id = null;
+
   /** Label of the node we are inside right now, or null. Read on shutdown. */
   private $active_node_label = null;
 
@@ -125,6 +128,14 @@ class Meow_MWFLOW_Runner {
     if ( !wp_next_scheduled( self::WATCHDOG_HOOK ) ) {
       wp_schedule_event( time() + MINUTE_IN_SECONDS, self::WATCHDOG_SCHEDULE, self::WATCHDOG_HOOK );
     }
+  }
+
+  /**
+   * True while a run of this flow is executing its steps in this request.
+   * The hook trigger uses it so a flow never triggers itself (see hook.php).
+   */
+  public function is_running_flow( $flow_id ) {
+    return $this->active_flow_id !== null && $this->active_flow_id === (int) $flow_id;
   }
 
   /* ------------------------------------------------------------------ */
@@ -248,6 +259,7 @@ class Meow_MWFLOW_Runner {
 
     $state = $loaded['state'];
     $this->active_run_id = $run_id;
+    $this->active_flow_id = (int) $loaded['flow_id'];
     $deadline = microtime( true ) + $this->pass_budget();
 
     try {
@@ -290,6 +302,7 @@ class Meow_MWFLOW_Runner {
     }
     finally {
       $this->active_run_id = null;
+      $this->active_flow_id = null;
       $this->disarm_fatal_guard();
     }
   }
@@ -441,6 +454,7 @@ class Meow_MWFLOW_Runner {
     }
 
     $this->active_run_id = $run_id;
+    $this->active_flow_id = (int) $loaded['flow_id'];
     try {
       if ( !empty( $state['queue'] ) ) {
         $this->execute_next( $state );
@@ -479,6 +493,7 @@ class Meow_MWFLOW_Runner {
     }
     finally {
       $this->active_run_id = null;
+      $this->active_flow_id = null;
       $this->disarm_fatal_guard();
     }
   }
@@ -490,6 +505,7 @@ class Meow_MWFLOW_Runner {
   private function advance_inline( $run_id, $flow_id, $state ) {
     $i = 0;
     $this->active_run_id = $run_id;
+    $this->active_flow_id = (int) $flow_id;
     try {
       while ( $i++ < self::SYNC_STEP_LIMIT ) {
         if ( empty( $state['queue'] ) && !$this->maybe_continue_loops( $state ) ) {
@@ -520,6 +536,7 @@ class Meow_MWFLOW_Runner {
     }
     finally {
       $this->active_run_id = null;
+      $this->active_flow_id = null;
       $this->disarm_fatal_guard();
     }
   }
@@ -651,7 +668,7 @@ class Meow_MWFLOW_Runner {
     $state['steps_executed'] = ( $state['steps_executed'] ?? 0 ) + 1;
     if ( $state['steps_executed'] > self::MAX_TOTAL_STEPS ) {
       throw new Exception( sprintf(
-        'Workflow stopped after %d steps — it may contain a loop that never ends.',
+        'Workflow stopped after %d steps. It may contain a loop that never ends.',
         self::MAX_TOTAL_STEPS
       ) );
     }

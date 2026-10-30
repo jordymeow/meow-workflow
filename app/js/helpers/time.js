@@ -1,5 +1,5 @@
-// Previous: none
-// Current: 0.1.1
+// Previous: 0.1.1
+// Current: 0.1.7
 
 /**
  * Format a WordPress MySQL datetime ("YYYY-MM-DD HH:MM:SS", site timezone) as
@@ -7,7 +7,7 @@
  * or the date itself if older than a week.
  */
 export function formatRelative(value) {
-  if (!value) return '—';
+  if (!value) return 'unknown';
   // Treat the MySQL string as UTC-ish for "ago" math — it's site-tz so the math
   // is slightly off, but the rounding makes that invisible at minute resolution.
   const ts = Date.parse(value.replace(' ', 'T') + 'Z');

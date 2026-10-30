@@ -8,8 +8,15 @@ if ( !defined( 'ABSPATH' ) ) { exit; }
  */
 class Meow_MWFLOW_Integrations_Wordpress {
 
+  // Throttles the wp_mail_failed trigger, see map_mail_failed().
+  const MAIL_FAILED_GUARD = 'mwflow_mail_failed_guard';
+
+  // Status each post had before its latest transition, see map_post_published().
+  private static $previous_status = [];
+
   public function __construct( $core ) {
     add_filter( 'mwflow_register_integration', [ $this, 'register' ] );
+    add_action( 'transition_post_status', [ __CLASS__, 'remember_previous_status' ], 10, 3 );
   }
 
   public function register( $integrations ) {
@@ -23,12 +30,13 @@ class Meow_MWFLOW_Integrations_Wordpress {
         Meow_MWFLOW_SDK::trigger( [
           'id'      => 'on_post_published',
           'name'    => __( 'When a post is published', 'meow-workflow' ),
+          'description' => __( 'Fires once, when a post goes live: a new post, or a scheduled one reaching its date. Saving a post that is already published does not fire it, use "When a post is updated" for that.', 'meow-workflow' ),
           'hook'    => 'publish_post',
           'args'    => 2,
           'outputs' => [
             Meow_MWFLOW_SDK::output( 'post_id', __( 'Post ID', 'meow-workflow' ), 'post_id' ),
           ],
-          'mapper'  => [ __CLASS__, 'map_first_arg_post' ],
+          'mapper'  => [ __CLASS__, 'map_post_published' ],
         ] ),
         Meow_MWFLOW_SDK::trigger( [
           'id'      => 'on_post_updated',
@@ -70,6 +78,20 @@ class Meow_MWFLOW_Integrations_Wordpress {
           'mapper'  => [ __CLASS__, 'map_comment_post' ],
         ] ),
         Meow_MWFLOW_SDK::trigger( [
+          'id'      => 'on_mail_failed',
+          'name'    => __( 'When an email fails to send', 'meow-workflow' ),
+          'description' => __( 'Fires when WordPress could not send an email. Note that if your whole mail setup is down, a flow that reacts by sending an email cannot reach you either: log it, or send it somewhere else with an HTTP request.', 'meow-workflow' ),
+          'hook'    => 'wp_mail_failed',
+          'args'    => 1,
+          'outputs' => [
+            Meow_MWFLOW_SDK::output( 'error', __( 'Reason it failed', 'meow-workflow' ), 'string' ),
+            Meow_MWFLOW_SDK::output( 'to', __( 'Recipients', 'meow-workflow' ), 'string' ),
+            Meow_MWFLOW_SDK::output( 'subject', __( 'Subject', 'meow-workflow' ), 'string' ),
+            Meow_MWFLOW_SDK::output( 'code', __( 'Error code', 'meow-workflow' ), 'string' ),
+          ],
+          'mapper'  => [ __CLASS__, 'map_mail_failed' ],
+        ] ),
+        Meow_MWFLOW_SDK::trigger( [
           'id'      => 'on_comment_approved',
           'name'    => __( 'When a comment is approved', 'meow-workflow' ),
           'hook'    => 'comment_unapproved_to_approved',
@@ -107,7 +129,7 @@ class Meow_MWFLOW_Integrations_Wordpress {
         Meow_MWFLOW_SDK::action( [
           'id'          => 'get_random_post',
           'name'        => __( 'Get random post', 'meow-workflow' ),
-          'description' => __( 'Pick one random published post — great for "post of the day" or social-sharing flows.', 'meow-workflow' ),
+          'description' => __( 'Pick one random published post. Great for "post of the day" or social-sharing flows.', 'meow-workflow' ),
           'icon'        => 'shuffle',
           'inputs'      => [
             Meow_MWFLOW_SDK::input( 'post_type', __( 'Post type', 'meow-workflow' ), 'string', [ 'default' => 'post', 'placeholder' => 'post', 'description' => __( 'The post type slug, e.g. post, page, or product.', 'meow-workflow' ) ] ),
@@ -159,7 +181,7 @@ class Meow_MWFLOW_Integrations_Wordpress {
             Meow_MWFLOW_SDK::input( 'content', __( 'Content', 'meow-workflow' ), 'longtext', [ 'description' => __( 'Leave empty to keep the current content.', 'meow-workflow' ) ] ),
             Meow_MWFLOW_SDK::input( 'excerpt', __( 'Excerpt', 'meow-workflow' ), 'longtext', [ 'description' => __( 'Leave empty to keep the current excerpt.', 'meow-workflow' ) ] ),
             Meow_MWFLOW_SDK::input( 'status', __( 'Status', 'meow-workflow' ), 'select', [
-              'empty_label' => __( '— No change —', 'meow-workflow' ),
+              'empty_label' => __( 'No change', 'meow-workflow' ),
               'description' => __( 'Leave on "No change" to keep the current status.', 'meow-workflow' ),
               'options'     => [
                 [ 'value' => 'publish', 'label' => __( 'Published', 'meow-workflow' ) ],
@@ -191,7 +213,7 @@ class Meow_MWFLOW_Integrations_Wordpress {
         Meow_MWFLOW_SDK::action( [
           'id'          => 'get_comment',
           'name'        => __( 'Get comment', 'meow-workflow' ),
-          'description' => __( 'Load a comment by its ID — its text, author and status — e.g. to moderate it with AI.', 'meow-workflow' ),
+          'description' => __( 'Load a comment by its ID (its text, author and status), e.g. to moderate it with AI.', 'meow-workflow' ),
           'icon'        => 'message-square',
           'inputs'      => [
             Meow_MWFLOW_SDK::input( 'comment_id', __( 'Comment ID', 'meow-workflow' ), 'number', [ 'required' => true, 'placeholder' => '{{ trigger.comment_id }}' ] ),
@@ -209,7 +231,7 @@ class Meow_MWFLOW_Integrations_Wordpress {
         Meow_MWFLOW_SDK::action( [
           'id'          => 'set_comment_status',
           'name'        => __( 'Set comment status', 'meow-workflow' ),
-          'description' => __( 'Approve, hold, spam, or trash a comment — the action half of a moderation flow.', 'meow-workflow' ),
+          'description' => __( 'Approve, hold, spam, or trash a comment: the action half of a moderation flow.', 'meow-workflow' ),
           'icon'        => 'message-square',
           'inputs'      => [
             Meow_MWFLOW_SDK::input( 'comment_id', __( 'Comment ID', 'meow-workflow' ), 'number', [ 'required' => true, 'placeholder' => '{{ trigger.comment_id }}' ] ),
@@ -250,7 +272,7 @@ class Meow_MWFLOW_Integrations_Wordpress {
         Meow_MWFLOW_SDK::action( [
           'id'          => 'get_recent_posts',
           'name'        => __( 'Get recent posts', 'meow-workflow' ),
-          'description' => __( 'Fetch the latest posts as a list — handy for a digest email. The "summary" output is a ready-to-paste bulleted list.', 'meow-workflow' ),
+          'description' => __( 'Fetch the latest posts as a list, handy for a digest email. The "summary" output is a ready-to-paste bulleted list.', 'meow-workflow' ),
           'icon'        => 'list',
           'inputs'      => [
             Meow_MWFLOW_SDK::input( 'post_type', __( 'Post type', 'meow-workflow' ), 'string', [ 'default' => 'post' ] ),
@@ -344,6 +366,26 @@ class Meow_MWFLOW_Integrations_Wordpress {
     return [ 'post_id' => (int) ( $args[0] ?? 0 ) ];
   }
 
+  public static function remember_previous_status( $new_status, $old_status, $post ) {
+    if ( $post instanceof WP_Post ) {
+      self::$previous_status[ $post->ID ] = $old_status;
+    }
+  }
+
+  /**
+   * WordPress fires publish_post on EVERY save of a published post, not only
+   * when it goes live, so "When a post is published" used to fire on each
+   * edit, on the block editor's second (meta box) save, and on the flow's own
+   * "Update post" step. publish_post does not say what the post was before,
+   * so transition_post_status (fired just before it, same request) records it.
+   * Unknown previous status (publish_post fired by hand) still runs.
+   */
+  public static function map_post_published( $args ) {
+    $post_id = (int) ( $args[0] ?? 0 );
+    if ( ( self::$previous_status[ $post_id ] ?? '' ) === 'publish' ) { return false; }
+    return [ 'post_id' => $post_id ];
+  }
+
   public static function map_user_register( $args ) {
     return [ 'user_id' => (int) ( $args[0] ?? 0 ) ];
   }
@@ -356,6 +398,33 @@ class Meow_MWFLOW_Integrations_Wordpress {
     $comment = $args[0] ?? null;
     $id = is_object( $comment ) ? (int) $comment->comment_ID : (int) $comment;
     return [ 'comment_id' => $id ];
+  }
+
+  /**
+   * wp_mail_failed hands over a WP_Error carrying the original wp_mail() call.
+   * The hook trigger nulls non-scalar args, so without this mapper the flow
+   * would fire with nothing usable in it.
+   *
+   * Returning false skips the run entirely, which is the loop guard: a flow on
+   * this trigger almost always reacts by sending an email, and whatever broke
+   * the first send breaks that one too, firing the trigger again. One run per
+   * minute still tells you your email is down, and it cannot run away.
+   */
+  public static function map_mail_failed( $args ) {
+    $error = $args[0] ?? null;
+    if ( !is_wp_error( $error ) ) { return false; }
+    if ( get_transient( self::MAIL_FAILED_GUARD ) ) { return false; }
+    set_transient( self::MAIL_FAILED_GUARD, 1, MINUTE_IN_SECONDS );
+
+    $data = $error->get_error_data();
+    $data = is_array( $data ) ? $data : [];
+    $to = $data['to'] ?? '';
+    return [
+      'error'   => $error->get_error_message(),
+      'code'    => (string) $error->get_error_code(),
+      'to'      => is_array( $to ) ? implode( ', ', $to ) : (string) $to,
+      'subject' => (string) ( $data['subject'] ?? '' ),
+    ];
   }
 
   public static function callback_get_post( $inputs ) {

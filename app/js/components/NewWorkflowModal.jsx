@@ -118,7 +118,7 @@ export default function NewWorkflowModal({ isOpen, onClose, aiAvailable, onExamp
               <Recommended>Recommended</Recommended>
             </OptionTitle>
             <OptionDesc>
-              Working workflows you can install and adapt — email alerts, AI drafts, WooCommerce orders, and more.
+              Working workflows you can install and adapt: email alerts, AI drafts, WooCommerce orders, and more.
             </OptionDesc>
           </OptionBody>
           <ChevronRight size={16} color="#94a3b8" />
@@ -142,7 +142,7 @@ export default function NewWorkflowModal({ isOpen, onClose, aiAvailable, onExamp
           <OptionBody>
             <OptionTitle>Start blank</OptionTitle>
             <OptionDesc>
-              An empty canvas with just a trigger — wire everything up yourself.
+              An empty canvas with just a trigger. Wire everything up yourself.
             </OptionDesc>
           </OptionBody>
           <ChevronRight size={16} color="#94a3b8" />

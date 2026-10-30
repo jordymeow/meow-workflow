@@ -163,7 +163,7 @@ function summarise(type, config, isActive) {
     return `Fires every time WordPress runs the "${config.hook}" action.`;
   }
   if (type === 'rss') {
-    if (!config.feed_url) return 'Paste a feed URL — the flow will run once for every new item that appears.';
+    if (!config.feed_url) return 'Paste a feed URL. The flow will run once for every new item that appears.';
     const every = { hourly: 'hour', twicedaily: '12 hours', daily: 'day' }[config.recurrence || 'hourly'] || 'hour';
     return `${isActive ? 'Checks' : 'Once active, checks'} the feed every ${every} and runs once per new item. Existing items don't fire.`;
   }
@@ -271,7 +271,7 @@ export default function TriggerConfigPanel({
 
         {triggerType === 'rss' && (
           <>
-            <Field label="Feed URL" hint="RSS or Atom. The flow runs once per new item — items already in the feed when you activate don't fire.">
+            <Field label="Feed URL" hint="RSS or Atom. The flow runs once per new item. Items already in the feed when you activate don't fire.">
               <NekoInput
                 placeholder="https://example.com/feed"
                 value={triggerConfig.feed_url || ''}
@@ -353,7 +353,7 @@ export default function TriggerConfigPanel({
           <>
             <Field label="WordPress event">
               <NekoSelect scrolldown value={selectedEvent} onChange={pickEvent} name="wp_event">
-                <NekoOption value="" label="— Choose an event —" />
+                <NekoOption value="" label="Choose an event…" />
                 {wpEvents.map((e) => (
                   <NekoOption key={e.id} value={e.id} label={e.name} />
                 ))}

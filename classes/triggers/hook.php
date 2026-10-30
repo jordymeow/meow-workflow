@@ -35,6 +35,14 @@ class Meow_MWFLOW_Triggers_Hook {
       $mapper = $known['mapper'] ?? null;
 
       $callback = function ( ...$incoming ) use ( $flow_id, $mapper ) {
+        // A flow never triggers itself. Its own steps fire the very hooks it
+        // listens to: the excerpt example's "Update post" fires publish_post
+        // again, which queued a new run, whose update queued the next one,
+        // forever (one paid AI call per cron pass). Checked before the mapper
+        // so a skipped event cannot consume a mapper's throttle either.
+        if ( $this->core->runner->is_running_flow( $flow_id ) ) {
+          return $incoming[0] ?? null;
+        }
         $payload = [];
         foreach ( $incoming as $index => $arg ) {
           // Keep raw args available but only when scalar — objects/arrays
@@ -45,8 +53,13 @@ class Meow_MWFLOW_Triggers_Hook {
         if ( isset( $payload['arg0'] ) ) { $payload['value'] = $payload['arg0']; }
 
         // Named-event enrichment: e.g. publish_post → { post_id: 123 }.
+        // A mapper returning false declines this particular event, so the flow
+        // does not run at all. That is how self-triggering hooks break their own
+        // loop (see map_mail_failed): the mapper sees the raw args, so it is the
+        // only place that can tell one occurrence from the next.
         if ( is_callable( $mapper ) ) {
           $mapped = call_user_func( $mapper, $incoming );
+          if ( $mapped === false ) { return $incoming[0] ?? null; }
           if ( is_array( $mapped ) ) {
             $payload = array_merge( $payload, $mapped );
           }

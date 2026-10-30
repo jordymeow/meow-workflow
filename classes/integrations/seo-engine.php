@@ -183,7 +183,7 @@ class Meow_MWFLOW_Integrations_Seo_Engine {
     } catch ( Throwable $e ) { /* GA not configured */ }
 
     $summary_text = sprintf(
-      __( 'SEO health — %1$d good, %2$d fair, %3$d poor. Monthly visitors: %4$d. Pageviews: %5$d.', 'meow-workflow' ),
+      __( 'SEO health: %1$d good, %2$d fair, %3$d poor. Monthly visitors: %4$d. Pageviews: %5$d.', 'meow-workflow' ),
       $good, $fair, $poor, $visitors, $pageviews
     );
 

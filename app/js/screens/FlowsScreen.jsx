@@ -275,7 +275,7 @@ export default function FlowsScreen({ onOpen }) {
     onSuccess: (run, flow) => {
       qc.invalidateQueries({ queryKey: ['runs'] });
       setRunFeedback(run.status === 'done'
-        ? { ok: true, message: `“${flow.name}” ran successfully — see the Runs tab for details.` }
+        ? { ok: true, message: `“${flow.name}” ran successfully. See the Runs tab for details.` }
         : { ok: false, message: `“${flow.name}” failed: ${run.error || 'a step failed.'}` });
     },
     onError: (err, flow) => {
@@ -335,7 +335,7 @@ export default function FlowsScreen({ onOpen }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                       <FlowName>{flow.name}</FlowName>
                       {flow.last_run_status === 'failed' && (
-                        <FailedDot title="The most recent run of this workflow failed — check the Runs tab." />
+                        <FailedDot title="The most recent run of this workflow failed. Check the Runs tab." />
                       )}
                     </div>
                     <FlowMeta>

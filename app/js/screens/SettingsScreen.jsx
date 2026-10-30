@@ -479,7 +479,7 @@ export default function SettingsScreen() {
       const skipped = (result.skipped || []).length;
       setMaintenanceFeedback({
         kind: 'success',
-        message: `Imported ${imported} workflow${imported === 1 ? '' : 's'}${skipped ? `, skipped ${skipped} malformed entries` : ''}. Imported workflows are paused — review and activate them.`
+        message: `Imported ${imported} workflow${imported === 1 ? '' : 's'}${skipped ? `, skipped ${skipped} malformed entries` : ''}. Imported workflows are paused: review and activate them.`
       });
     },
     onError: (err) => setMaintenanceFeedback({ kind: 'error', message: err.message || 'Import failed.' })
@@ -552,7 +552,7 @@ export default function SettingsScreen() {
 
           <NekoBlock className="primary" title={numberedTitle(1, 'Essentials')} subtitle="The steps every workflow builds on.">
             <BlockIntro>
-              <b>Core</b> and <b>WordPress</b> are always here — logic, branching, posts, users, email.{' '}
+              <b>Core</b> and <b>WordPress</b> are always here: logic, branching, posts, users, email.{' '}
               <b>AI Engine</b> adds text, image and JSON steps. Click a card to see what's inside.
             </BlockIntro>
             <Grid>
@@ -561,7 +561,7 @@ export default function SettingsScreen() {
             </Grid>
             {!groups.ai && (
               <MissingCard style={{ marginTop: 8 }}>
-                <span><b>AI Engine</b> isn't installed — without it there are no AI steps and no Build with AI.</span>
+                <span><b>AI Engine</b> isn't installed. Without it, there are no AI steps and no Build with AI.</span>
               </MissingCard>
             )}
           </NekoBlock>
@@ -582,7 +582,7 @@ export default function SettingsScreen() {
             )}
           </NekoBlock>
 
-          <NekoBlock className="primary" title={numberedTitle(3, 'Your Functions')} subtitle="Anything else — written by you or AI."
+          <NekoBlock className="primary" title={numberedTitle(3, 'Your Functions')} subtitle="Anything else, written by you or AI."
             action={groups.functions && (
               <NekoButton
                 className="secondary"
@@ -593,14 +593,14 @@ export default function SettingsScreen() {
             )}
           >
             <BlockIntro>
-              Write a function in <b>Code Engine</b> — or describe it to its AI ("create a WooCommerce
+              Write a function in <b>Code Engine</b>, or describe it to its AI ("create a WooCommerce
               coupon"). It appears in the step picker the moment it's active.
             </BlockIntro>
             {groups.functions ? (
               <Grid><IntegrationCard it={groups.functions} onOpen={setDetail} /></Grid>
             ) : (
               <MissingCard>
-                <span><b>Code Engine</b> isn't installed — install it to turn your own functions into steps.</span>
+                <span><b>Code Engine</b> isn't installed. Install it to turn your own functions into steps.</span>
               </MissingCard>
             )}
           </NekoBlock>
@@ -614,7 +614,7 @@ export default function SettingsScreen() {
             <BlockIntro>
               Zapier, Make and n8n make you wait for someone to build each connector. Meow Workflow
               runs <b>inside WordPress</b>, so it already reaches your posts, users, and plugins. Need
-              something we don't ship? Ask <b>Code Engine</b>'s AI to write the function — it becomes a
+              something we don't ship? Ask <b>Code Engine</b>'s AI to write the function and it becomes a
               step instantly. No catalog, no waiting.
             </BlockIntro>
             <InfoGrid>
@@ -636,7 +636,7 @@ export default function SettingsScreen() {
 
           <NekoBlock className="primary" title="For Developers">
             <MaintenanceHelp style={{ marginBottom: 14 }}>
-              Add your own actions and triggers with the <strong>mwflow_register_integration</strong> filter — see <strong>classes/integrations/</strong> for examples.
+              Add your own actions and triggers with the <strong>mwflow_register_integration</strong> filter. See <strong>classes/integrations/</strong> for examples.
             </MaintenanceHelp>
 
             <DiagnosticsHeader type="button" onClick={() => setDiagnosticsOpen((v) => !v)}>

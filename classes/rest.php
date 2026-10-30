@@ -229,7 +229,7 @@ class Meow_MWFLOW_Rest {
       ), [ 'status' => 400, 'error_kind' => 'validation', 'issues' => $errors ] );
     }
     if ( !$this->core->publish_flow( $id ) ) {
-      return new WP_Error( 'mwflow_publish_failed', __( 'Could not publish — flow not found.', 'meow-workflow' ), [ 'status' => 404 ] );
+      return new WP_Error( 'mwflow_publish_failed', __( 'Could not publish: flow not found.', 'meow-workflow' ), [ 'status' => 404 ] );
     }
     return rest_ensure_response( $this->with_issues( $this->core->get_flow( $id ) ) );
   }
@@ -320,7 +320,7 @@ class Meow_MWFLOW_Rest {
           if ( $count >= $limit ) {
             return new WP_Error(
               'mwflow_rate_limited',
-              __( 'Too many requests — webhook rate limit exceeded.', 'meow-workflow' ),
+              __( 'Too many requests: webhook rate limit exceeded.', 'meow-workflow' ),
               [ 'status' => 429 ]
             );
           }

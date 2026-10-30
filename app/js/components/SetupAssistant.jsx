@@ -290,7 +290,7 @@ const SetupAssistant = ({ flows, aiAvailable, onInstallExample, onBuildWithAi, o
             </ChoiceButton>
           </ChoiceButtons>
           {state.steps.example === 'info' && <InfoBox>
-            The gallery has categories: <b>Basics</b> need no extra plugin (try <b>Email Me When a Post Is Published</b>, or <b>Coin Flip</b> to learn branching), while <b>AI</b>, <b>WooCommerce</b>, and <b>SEO</b> examples light up when the matching plugin is active. Installing the same example twice just creates a second copy — delete what you don't keep.
+            The gallery has categories: <b>Basics</b> need no extra plugin (try <b>Email Me When a Post Is Published</b>, or <b>Coin Flip</b> to learn branching), while <b>AI</b>, <b>WooCommerce</b>, and <b>SEO</b> examples light up when the matching plugin is active. Installing the same example twice just creates a second copy, so delete what you don't keep.
           </InfoBox>}
         </StepContent>
       </StyledStep>
@@ -301,7 +301,7 @@ const SetupAssistant = ({ flows, aiAvailable, onInstallExample, onBuildWithAi, o
         <StepContent>
           <StepTitle>Run It With Test Once</StepTitle>
           <StepDescription>
-            Open a workflow and press <b>Test once</b> — each step lights up as it runs, and clicking one shows what it produced.
+            Open a workflow and press <b>Test once</b>: each step lights up as it runs, and clicking one shows what it produced.
             {hasRun && <>{' '}<b style={{ color: STEP_COLORS.green }}>Done!</b> Check the Runs tab for the history.</>}
           </StepDescription>
           <ChoiceButtons>
@@ -311,7 +311,7 @@ const SetupAssistant = ({ flows, aiAvailable, onInstallExample, onBuildWithAi, o
             </ChoiceButton>
           </ChoiceButtons>
           {state.steps.test === 'info' && <InfoBox>
-            Test once always runs your <b>draft</b>, never the published version — so you can experiment safely on a live workflow. Event-based workflows (a post is published, an order comes in…) are tested against <b>real data from your site</b>: the latest post, user, comment, or order. Webhook flows can <b>capture</b> a real call as their test sample.
+            Test once always runs your <b>draft</b>, never the published version, so you can experiment safely on a live workflow. Event-based workflows (a post is published, an order comes in…) are tested against <b>real data from your site</b>: the latest post, user, comment, or order. Webhook flows can <b>capture</b> a real call as their test sample.
           </InfoBox>}
         </StepContent>
       </StyledStep>
@@ -322,7 +322,7 @@ const SetupAssistant = ({ flows, aiAvailable, onInstallExample, onBuildWithAi, o
         <StepContent>
           <StepTitle>Pass Data Between Steps</StepTitle>
           <StepDescription>
-            Steps share data with <code>{'{{ references }}'}</code> — <code>{'{{ trigger.post_id }}'}</code> from the trigger, <code>{'{{ fetch_post.title }}'}</code> from an earlier step. Each step shows its <code>#id</code> top-left.
+            Steps share data with <code>{'{{ references }}'}</code>: <code>{'{{ trigger.post_id }}'}</code> from the trigger, <code>{'{{ fetch_post.title }}'}</code> from an earlier step. Each step shows its <code>#id</code> top-left.
           </StepDescription>
           <ChoiceButtons>
             <ChoiceButton $active={state.steps.references === 'ok'} onClick={() => setChoice('references', 'ok')}>
@@ -333,7 +333,7 @@ const SetupAssistant = ({ flows, aiAvailable, onInstallExample, onBuildWithAi, o
             </ChoiceButton>
           </ChoiceButtons>
           {state.steps.references === 'info' && <InfoBox>
-            You never have to type references by hand: every field has an <b>Insert data</b> button listing everything available. Used references appear as <b>coloured chips</b> under the field — click one to jump to the step it comes from; a <b>red chip</b> means the reference is broken. Renaming a step's <code>#id</code> (click it in the side panel) safely rewrites every reference to it. Formatting filters work too: <code>{'{{ post.title | upper }}'}</code>, <code>{'{{ now | date:"F j" }}'}</code>, <code>{'{{ data | json }}'}</code>. In a JSON body, a reference inside quotes is escaped for you, so <code>{'{ "content": "{{ scrape.markdown }}" }'}</code> stays valid whatever the text contains.
+            You never have to type references by hand: every field has an <b>Insert data</b> button listing everything available. Used references appear as <b>coloured chips</b> under the field. Click one to jump to the step it comes from; a <b>red chip</b> means the reference is broken. Renaming a step's <code>#id</code> (click it in the side panel) safely rewrites every reference to it. Formatting filters work too: <code>{'{{ post.title | upper }}'}</code>, <code>{'{{ now | date:"F j" }}'}</code>, <code>{'{{ data | json }}'}</code>. In a JSON body, a reference inside quotes is escaped for you, so <code>{'{ "content": "{{ scrape.markdown }}" }'}</code> stays valid whatever the text contains.
           </InfoBox>}
         </StepContent>
       </StyledStep>
@@ -355,7 +355,7 @@ const SetupAssistant = ({ flows, aiAvailable, onInstallExample, onBuildWithAi, o
             </ChoiceButton>
           </ChoiceButtons>
           {state.steps.branching === 'info' && <InfoBox>
-            Branching steps grow <b>coloured connectors</b> at their bottom edge — drag each one to the step that path should run. Anything not matched simply doesn't run. Every step also has <b>Error handling</b>: stop the flow, continue anyway, retry, or follow a dedicated failure branch for recovery logic.
+            Branching steps grow <b>coloured connectors</b> at their bottom edge. Drag each one to the step that path should run. Anything not matched simply doesn't run. Every step also has <b>Error handling</b>: stop the flow, continue anyway, retry, or follow a dedicated failure branch for recovery logic.
           </InfoBox>}
         </StepContent>
       </StyledStep>
@@ -376,7 +376,7 @@ const SetupAssistant = ({ flows, aiAvailable, onInstallExample, onBuildWithAi, o
             </ChoiceButton>
           </ChoiceButtons>
           {state.steps.live === 'info' && <InfoBox>
-            This separation is what makes editing safe: a live workflow keeps running its <b>published</b> version while you change the draft, and Test once always exercises the draft. When you're happy, hit <b>Publish</b> (top right) and the live version updates atomically. Pausing never loses anything — the trigger just stops firing.
+            This separation is what makes editing safe: a live workflow keeps running its <b>published</b> version while you change the draft, and Test once always exercises the draft. When you're happy, hit <b>Publish</b> (top right) and the live version updates atomically. Pausing never loses anything: the trigger just stops firing.
           </InfoBox>}
         </StepContent>
       </StyledStep>
@@ -388,7 +388,7 @@ const SetupAssistant = ({ flows, aiAvailable, onInstallExample, onBuildWithAi, o
           <StepContent>
             <StepTitle>Build One With AI</StepTitle>
             <StepDescription>
-              Describe a workflow in plain English — "when an order comes in, email me a summary" — and AI Engine assembles it from your installed steps.
+              Describe a workflow in plain English (like "when an order comes in, email me a summary") and AI Engine assembles it from your installed steps.
               {aiBuilt && <>{' '}<b style={{ color: STEP_COLORS.green }}>Done!</b> You've built one.</>}
             </StepDescription>
             <ChoiceButtons>

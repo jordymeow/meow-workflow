@@ -497,6 +497,9 @@ export default function Editor({ flowId, onBack }) {
   // flow's triggerType/triggerConfig is the single source and the node derives
   // from it — they can never drift. Also self-heals legacy flows on open.
   useEffect(() => {
+    // A hook's label comes from the registered trigger list: wait for it rather
+    // than writing the raw hook name ("publish_post") onto the node meanwhile.
+    if (triggerType === 'hook' && integrations.isLoading) return;
     const ints = integrations.data || [];
     setDefinition((d) => {
       const idx = d.nodes.findIndex((n) => n.type === 'trigger' || n.data?.kind === 'trigger');
@@ -521,7 +524,7 @@ export default function Editor({ flowId, onBack }) {
       nodes[idx] = { ...node, data: { ...node.data, kind: 'trigger', trigger: triggerType, label, event } };
       return { ...d, nodes };
     });
-  }, [triggerType, triggerConfig, integrations.data]);
+  }, [triggerType, triggerConfig, integrations.data, integrations.isLoading]);
 
   const performSave = useCallback(async () => {
     setSaveState('saving');
@@ -557,7 +560,7 @@ export default function Editor({ flowId, onBack }) {
       setHasUnpublished(false);
       qc.invalidateQueries({ queryKey: ['flows'] });
       qc.invalidateQueries({ queryKey: ['flow', flowId] });
-      showToast(true, 'Workflow published — live triggers now use this version.');
+      showToast(true, 'Workflow published. Live triggers now use this version.');
     },
     onError: (err) => {
       if (err.kind === 'validation') {
@@ -606,7 +609,7 @@ export default function Editor({ flowId, onBack }) {
       setLastRun(run);
       qc.invalidateQueries({ queryKey: ['runs'] });
       if (run.status === 'done') {
-        showToast(true, 'Test run finished — all steps succeeded.');
+        showToast(true, 'Test run finished: all steps succeeded.');
       } else {
         showToast(false, run.error || 'Test run failed. Open the step settings to fix.');
       }
@@ -658,7 +661,7 @@ export default function Editor({ flowId, onBack }) {
     if (!node) return;
     // Every workflow needs its trigger — never let it be removed.
     if (node.type === 'trigger') {
-      showToast(false, 'The trigger can’t be deleted — every workflow needs one.');
+      showToast(false, 'The trigger can’t be deleted: every workflow needs one.');
       return;
     }
     const removedEdges = definition.edges.filter(
@@ -1013,8 +1016,8 @@ export default function Editor({ flowId, onBack }) {
             $active={isActive}
             onClick={() => setIsActive(!isActive)}
             title={isActive
-              ? 'Active — runs automatically on its trigger. Click to pause.'
-              : 'Paused — never runs on its own (Test once still works). Click to activate.'}
+              ? 'Active: runs automatically on its trigger. Click to pause.'
+              : 'Paused: never runs on its own (Test once still works). Click to activate.'}
           >
             {isActive ? <Power size={14} /> : <PowerOff size={14} />}
             {isActive ? 'Active' : 'Paused'}
@@ -1046,9 +1049,9 @@ export default function Editor({ flowId, onBack }) {
             title={saveChip.state === 'unpublished'
               ? 'Your edits are auto-saved as a draft. Live triggers keep running the published version until you click Publish.'
               : saveChip.state === 'saved'
-                ? 'The live version matches your editor — nothing left to publish.'
+                ? 'The live version matches your editor. Nothing left to publish.'
                 : saveChip.state === 'error'
-                  ? 'The draft couldn’t be saved — your last change isn’t stored yet.'
+                  ? 'The draft couldn’t be saved, so your last change isn’t stored yet.'
                   : 'Auto-saving your changes to the draft…'}
           >
             <SaveDot $state={saveChip.state} />
@@ -1056,7 +1059,7 @@ export default function Editor({ flowId, onBack }) {
           </SaveChip>
 
           <span style={{ display: 'inline-flex', minWidth: 116, justifyContent: 'flex-end' }}
-            title={hasUnpublished ? 'You have changes that aren’t live yet — click to publish them.' : 'The live version is up to date.'}>
+            title={hasUnpublished ? 'You have changes that aren’t live yet. Click to publish them.' : 'The live version is up to date.'}>
             <NekoButton
               className={publishCtl.className}
               icon={publishCtl.icon}

@@ -252,7 +252,7 @@ export default function AiAssistMenu({
             {error && <NekoMessage variant="danger">{error}</NekoMessage>}
 
             {!busy && !error && mode === 'explain' && (
-              <ExplainBody>{result?.message || '—'}</ExplainBody>
+              <ExplainBody>{result?.message || 'No explanation came back. Try again.'}</ExplainBody>
             )}
 
             {!busy && !error && mode === 'suggest' && result?.suggestion?.step && (() => {

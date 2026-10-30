@@ -68,14 +68,14 @@ export default function InputField({ field, value, onChange, tokens, refContext 
   const showPicker = !sourced && EXPRESSION_TYPES.has(field.type) && tokens && tokens.length > 0;
   const isEmpty = value === '' || value === undefined || value === null;
   const requiredWarning = field.required && field.type !== 'boolean' && isEmpty
-    ? 'Required — fill this in before the workflow can run.'
+    ? 'Required: fill this in before the workflow can run.'
     : null;
 
   let widget;
   if (sourced) {
     widget = (
       <NekoSelect scrolldown value={value ?? ''} onChange={(v) => onChange(v)} name={field.id}>
-        <NekoOption value="" label={field.empty_label || '— Use default —'} />
+        <NekoOption value="" label={field.empty_label || 'Use default'} />
         {sourced.map((opt) => (
           <NekoOption key={opt.value} value={opt.value} label={opt.label} />
         ))}
@@ -115,7 +115,7 @@ export default function InputField({ field, value, onChange, tokens, refContext 
         );
         widget = (
           <NekoSelect scrolldown value={value ?? ''} onChange={(v) => onChange(v)} name={field.id}>
-            {!field.required && <NekoOption value="" label={field.empty_label || '— Use default —'} />}
+            {!field.required && <NekoOption value="" label={field.empty_label || 'Use default'} />}
             {options.map((opt) => (
               <NekoOption key={opt.value} value={opt.value} label={opt.label} />
             ))}

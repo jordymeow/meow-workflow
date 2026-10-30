@@ -70,7 +70,7 @@ class Meow_MWFLOW_Triggers_RSS {
     }
     $feed = fetch_feed( esc_url_raw( $feed_url ) );
     if ( is_wp_error( $feed ) ) {
-      $this->core->logging->warn( sprintf( 'RSS trigger: could not fetch %s — %s', $feed_url, $feed->get_error_message() ) );
+      $this->core->logging->warn( sprintf( 'RSS trigger: could not fetch %s (%s)', $feed_url, $feed->get_error_message() ) );
       return;
     }
 

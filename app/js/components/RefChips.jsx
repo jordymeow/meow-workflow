@@ -138,7 +138,7 @@ export default function RefChips({ value, nodes, integrations, onSelectNode, ste
               $color={color}
               $clickable={!!onSelectNode}
               onClick={() => onSelectNode?.(id)}
-              title={withValue(`Used from step #${id} — click to open it`, id, path)}
+              title={withValue(`Used from step #${id}. Click to open it.`, id, path)}
             >
               <StepIcon icon={node.data.icon} color={color} size={16} />
               <ChipText>{nodeDisplayName(node, integrations)} {suffix}</ChipText>
@@ -152,10 +152,10 @@ export default function RefChips({ value, nodes, integrations, onSelectNode, ste
             type="button"
             $color="#ef4444"
             $clickable={false}
-            title="No step with this reference exists — the value will be empty at runtime."
+            title="No step with this reference exists, so the value will be empty at runtime."
           >
             <MiniIcon $bg="#ef4444"><CircleAlert size={10} /></MiniIcon>
-            <ChipText>{id} — missing</ChipText>
+            <ChipText>{id} (missing)</ChipText>
           </Chip>
         );
       })}

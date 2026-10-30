@@ -34,7 +34,7 @@ class Meow_MWFLOW_Integrations_Code_Engine {
           'description' => __( 'Run a Code Engine snippet by its ID and capture what it returns.', 'meow-workflow' ),
           'icon'        => 'play',
           'inputs'      => [
-            Meow_MWFLOW_SDK::input( 'id', __( 'Snippet', 'meow-workflow' ), 'number', [ 'required' => true, 'options_source' => 'code.snippets', 'empty_label' => __( '— Pick a snippet —', 'meow-workflow' ), 'description' => __( 'The Code Engine snippet to run.', 'meow-workflow' ) ] ),
+            Meow_MWFLOW_SDK::input( 'id', __( 'Snippet', 'meow-workflow' ), 'number', [ 'required' => true, 'options_source' => 'code.snippets', 'empty_label' => __( 'Pick a snippet…', 'meow-workflow' ), 'description' => __( 'The Code Engine snippet to run.', 'meow-workflow' ) ] ),
             Meow_MWFLOW_SDK::input( 'args', __( 'Arguments (optional)', 'meow-workflow' ), 'json', [ 'placeholder' => '{ "name": "value" }', 'description' => __( 'A JSON object of arguments passed to the snippet. Leave empty if it takes none.', 'meow-workflow' ) ] ),
           ],
           'outputs'     => [ Meow_MWFLOW_SDK::output( 'result', __( 'Snippet return value', 'meow-workflow' ), 'string' ) ],
@@ -46,7 +46,7 @@ class Meow_MWFLOW_Integrations_Code_Engine {
           'description' => __( 'Run a Code Engine snippet by its name and capture what it returns.', 'meow-workflow' ),
           'icon'        => 'play',
           'inputs'      => [
-            Meow_MWFLOW_SDK::input( 'name', __( 'Snippet', 'meow-workflow' ), 'string', [ 'required' => true, 'options_source' => 'code.functions', 'empty_label' => __( '— Pick a snippet —', 'meow-workflow' ), 'description' => __( 'The Code Engine function snippet to run.', 'meow-workflow' ) ] ),
+            Meow_MWFLOW_SDK::input( 'name', __( 'Snippet', 'meow-workflow' ), 'string', [ 'required' => true, 'options_source' => 'code.functions', 'empty_label' => __( 'Pick a snippet…', 'meow-workflow' ), 'description' => __( 'The Code Engine function snippet to run.', 'meow-workflow' ) ] ),
             Meow_MWFLOW_SDK::input( 'args', __( 'Arguments (optional)', 'meow-workflow' ), 'json', [ 'placeholder' => '{ "name": "value" }', 'description' => __( 'A JSON object of arguments passed to the snippet. Leave empty if it takes none.', 'meow-workflow' ) ] ),
           ],
           'outputs'     => [ Meow_MWFLOW_SDK::output( 'result', __( 'Snippet return value', 'meow-workflow' ), 'string' ) ],

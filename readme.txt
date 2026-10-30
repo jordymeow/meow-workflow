@@ -5,7 +5,7 @@ Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.1.6
+Stable tag: 0.1.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,15 @@ No. AI steps use your own installed AI Engine (and your own API keys). The HTTP 
 4. Schedule a workflow — this weekly content brief runs every Monday, gathers recent posts, and writes a summary with AI Engine.
 
 == Changelog ==
+
+= 0.1.7 (2026/10/30) =
+* Add: New trigger that fires when an email fails to send.
+* Fix: Workflows no longer trigger themselves.
+* Fix: The "When a post is published" trigger only fires when a post actually goes live.
+* Fix: The trigger card shows its name again when a workflow is reopened.
+* 🎵 Discuss with others about Meow Workflow on [the Discord](https://discord.gg/bHDGh38).
+* 🌴 Keep us motivated with [a little review here](https://wordpress.org/support/plugin/meow-workflow/reviews/). Thank you!
+* 🥰 If you want to help us, check our [Patreon](https://www.patreon.com/meowapps). Thank you!
 
 = 0.1.6 (2026/09/11) =
 * Add: References inside quoted strings of JSON bodies are now escaped automatically.

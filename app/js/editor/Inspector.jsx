@@ -176,7 +176,7 @@ function RefIdEditor({ node, definition, onRenameId }) {
           }}
         />
       ) : (
-        <RefIdChip type="button" onClick={start} title="Rename this step's reference — every {{ }} using it updates automatically">
+        <RefIdChip type="button" onClick={start} title="Rename this step's reference. Every {{ }} using it updates automatically.">
           #{node.id} <Pencil size={10} />
         </RefIdChip>
       )}
@@ -282,7 +282,7 @@ const RunKVVal = styled.span`
 `;
 
 function formatRunValue(v) {
-  if (v === null || v === undefined) return '—';
+  if (v === null || v === undefined) return 'empty';
   if (typeof v === 'object') return JSON.stringify(v);
   if (typeof v === 'boolean') return v ? 'true' : 'false';
   return String(v);

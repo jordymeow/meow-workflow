@@ -94,7 +94,7 @@ class Meow_MWFLOW_Integrations_Core {
         Meow_MWFLOW_SDK::action( [
           'id'          => 'router',
           'name'        => __( 'Branch by value', 'meow-workflow' ),
-          'description' => __( 'Sends the workflow down a path matching the value below. Each outgoing arrow can be labelled — e.g. publish, draft, trash.', 'meow-workflow' ),
+          'description' => __( 'Sends the workflow down a path matching the value below. Each outgoing arrow can be labelled, e.g. publish, draft, trash.', 'meow-workflow' ),
           'icon'        => 'split',
           'inputs'      => [
             Meow_MWFLOW_SDK::input( 'value', __( 'Value to match', 'meow-workflow' ), 'expression', [
@@ -114,7 +114,7 @@ class Meow_MWFLOW_Integrations_Core {
         Meow_MWFLOW_SDK::action( [
           'id'          => 'foreach',
           'name'        => __( 'For Each', 'meow-workflow' ),
-          'description' => __( 'Runs the steps after it once for every item in a list — e.g. each post from Get Recent Posts. Wire the DONE connector to what should happen after the last item.', 'meow-workflow' ),
+          'description' => __( 'Runs the steps after it once for every item in a list, e.g. each post from Get Recent Posts. Wire the DONE connector to what should happen after the last item.', 'meow-workflow' ),
           'icon'        => 'repeat',
           'inputs'      => [
             Meow_MWFLOW_SDK::input( 'items', __( 'Items', 'meow-workflow' ), 'expression', [
@@ -124,7 +124,7 @@ class Meow_MWFLOW_Integrations_Core {
             ] ),
             Meow_MWFLOW_SDK::input( 'limit', __( 'Max items', 'meow-workflow' ), 'number', [
               'default' => 25, 'min' => 1, 'max' => 100, 'advanced' => true,
-              'description' => __( 'Safety cap — extra items are skipped.', 'meow-workflow' ),
+              'description' => __( 'Safety cap: extra items are skipped.', 'meow-workflow' ),
             ] ),
           ],
           'outputs'     => [
@@ -137,12 +137,12 @@ class Meow_MWFLOW_Integrations_Core {
         Meow_MWFLOW_SDK::action( [
           'id'          => 'random',
           'name'        => __( 'Random', 'meow-workflow' ),
-          'description' => __( 'Generates a random value — one item picked from a list, or a number in a range. Pair with Branch By Value or Condition to make a flow act differently each run.', 'meow-workflow' ),
+          'description' => __( 'Generates a random value: one item picked from a list, or a number in a range. Pair with Branch By Value or Condition to make a flow act differently each run.', 'meow-workflow' ),
           'icon'        => 'dices',
           'inputs'      => [
             Meow_MWFLOW_SDK::input( 'choices', __( 'Choices', 'meow-workflow' ), 'string', [
               'placeholder' => 'heads, tails',
-              'description' => __( 'Optional. Comma-separated list — one item is picked at random. Leave empty to get a number between Min and Max instead.', 'meow-workflow' ),
+              'description' => __( 'Optional. Comma-separated list, one item is picked at random. Leave empty to get a number between Min and Max instead.', 'meow-workflow' ),
             ] ),
             Meow_MWFLOW_SDK::input( 'min', __( 'Min', 'meow-workflow' ), 'number', [ 'default' => 1 ] ),
             Meow_MWFLOW_SDK::input( 'max', __( 'Max', 'meow-workflow' ), 'number', [ 'default' => 100 ] ),
@@ -194,7 +194,7 @@ class Meow_MWFLOW_Integrations_Core {
             Meow_MWFLOW_SDK::input( 'to', __( 'To', 'meow-workflow' ), 'email', [
               'required'    => true,
               'default'     => '{{ admin_email }}',
-              'description' => __( '{{ admin_email }} sends to the site admin — or type any address.', 'meow-workflow' ),
+              'description' => __( '{{ admin_email }} sends to the site admin, or type any address.', 'meow-workflow' ),
             ] ),
             Meow_MWFLOW_SDK::input( 'subject', __( 'Subject', 'meow-workflow' ), 'string', [
               'required'    => true,
@@ -361,7 +361,7 @@ class Meow_MWFLOW_Integrations_Core {
     $url = (string) ( $inputs['url'] ?? '' );
     if ( !wp_http_validate_url( $url ) ) {
       throw new Exception( sprintf(
-        'Refused to request "%s" — only public http(s) URLs are allowed (loopback and private addresses are blocked).',
+        'Refused to request "%s": only public http(s) URLs are allowed (loopback and private addresses are blocked).',
         $url
       ) );
     }
@@ -372,7 +372,7 @@ class Meow_MWFLOW_Integrations_Core {
       if ( filter_var( $ip, FILTER_VALIDATE_IP )
         && !filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
         throw new Exception( sprintf(
-          'Refused to request "%s" — it resolves to a private or reserved network address.',
+          'Refused to request "%s": it resolves to a private or reserved network address.',
           $url
         ) );
       }

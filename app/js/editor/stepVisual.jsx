@@ -237,10 +237,13 @@ export function deriveTriggerLabel(type, config, integrations) {
     }
   }
   if (type === 'hook') {
-    for (const integration of (integrations || [])) {
-      const ev = (integration.triggers || []).find((t) => t.id === c.event);
-      if (ev) return ev.name;
-    }
+    // Templates and AI-authored flows store only `hook` (no `event`), so match
+    // on the hook too, as the runner does. Otherwise reopening a saved flow
+    // showed "publish_post" instead of "When a post is published".
+    const all = (integrations || []).flatMap((i) => i.triggers || []);
+    const ev = (c.event && all.find((t) => t.id === c.event))
+      || (c.hook && all.find((t) => t.hook === c.hook));
+    if (ev) return ev.name;
     if (c.hook) return c.hook;
     return 'WordPress event';
   }

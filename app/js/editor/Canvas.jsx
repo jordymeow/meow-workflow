@@ -200,7 +200,7 @@ function CanvasInner({ definition, setDefinition, selectedNodeId, setSelectedNod
           <div>
             <div style={{ fontWeight: 700, marginBottom: 2 }}>Add your first step</div>
             <div style={{ fontSize: 12, color: '#64748b' }}>
-              Use the <Hint>Add step</Hint> toolbar below — new steps chain onto your trigger automatically.
+              Use the <Hint>Add step</Hint> toolbar below. New steps chain onto your trigger automatically.
             </div>
           </div>
         </OnboardingOverlay>
